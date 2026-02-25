@@ -30,16 +30,32 @@ def webhook():
         user_message = message.get("text", "")
         reply_token = event.get("replyToken")
 
-        # 呼叫 OpenAI
-        ai = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "你是HealthLine健康管理AI助手，用繁體中文回答。"},
-                {"role": "user", "content": user_message}
-            ]
-        )
+        # 安全呼叫 OpenAI
+        try:
+            ai = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "你是HealthLine健康管理AI助手，用繁體中文回答。"
+                    },
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
+                ]
+            )
 
-        reply_text = ai.choices[0].message.content
+            reply_text = ai.choices[0].message.content
+
+        except Exception as e:
+            print("OpenAI error:", str(e))
+
+            reply_text = (
+                "⚠️ 健康管理系統暫時忙碌\n\n"
+                "請稍後再試。\n\n"
+                "HealthLine AI"
+            )
 
         headers = {
             "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
@@ -48,7 +64,12 @@ def webhook():
 
         body = {
             "replyToken": reply_token,
-            "messages": [{"type": "text", "text": reply_text}]
+            "messages": [
+                {
+                    "type": "text",
+                    "text": reply_text
+                }
+            ]
         }
 
         requests.post(
