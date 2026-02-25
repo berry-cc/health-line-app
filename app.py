@@ -10,34 +10,49 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+# 健康檢查
 @app.route("/")
 def home():
-    return "Health Line AI Bot Running"
+    return "HealthLine AI Bot Running OK"
 
+# LINE webhook
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.json
-    events = data.get("events", [])
+    try:
+        data = request.json
+        events = data.get("events", [])
 
-    for event in events:
-        if event.get("type") != "message":
-            continue
+        for event in events:
 
-        message = event.get("message", {})
-        if message.get("type") != "text":
-            continue
+            if event.get("type") != "message":
+                continue
 
-        user_message = message.get("text", "")
-        reply_token = event.get("replyToken")
+            message = event.get("message", {})
 
-        # 安全呼叫 OpenAI
-        try:
-            ai = client.chat.completions.create(
-                model="gpt-4.1-mini",
+            if message.get("type") != "text":
+                continue
+
+            user_message = message.get("text", "")
+            reply_token = event.get("replyToken")
+
+            # 呼叫 OpenAI
+            ai_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                temperature=0.6,
+                max_tokens=300,
                 messages=[
                     {
                         "role": "system",
-                        "content": "你是HealthLine健康管理AI助手，用繁體中文回答。"
+                        "content": """
+你是 HealthLine 專業健康管理AI助手。
+
+規則：
+- 使用繁體中文
+- 回答專業但親切
+- 簡潔清楚
+- 像真人健康顧問
+- 避免過長回答
+"""
                     },
                     {
                         "role": "user",
@@ -46,39 +61,36 @@ def webhook():
                 ]
             )
 
-            reply_text = ai.choices[0].message.content
+            reply_text = ai_response.choices[0].message.content
 
-        except Exception as e:
-    print("OpenAI error:", str(e))
+            if not reply_text:
+                reply_text = "抱歉，我暫時無法回覆，請稍後再試。"
 
-    # 免費 fallback 回覆（不使用 OpenAI）
-    reply_text = (
-        "HealthLine 健康管理初步分析：\n\n"
-        "• 建議保持充足睡眠\n"
-        "• 每日適度運動\n"
-        "• 注意壓力管理\n\n"
-        "（AI進階分析暫時不可用）"
-    )
+            # 回覆 LINE
+            headers = {
+                "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
+                "Content-Type": "application/json"
+            }
 
-        headers = {
-            "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
-            "Content-Type": "application/json"
-        }
+            body = {
+                "replyToken": reply_token,
+                "messages": [
+                    {
+                        "type": "text",
+                        "text": reply_text
+                    }
+                ]
+            }
 
-        body = {
-            "replyToken": reply_token,
-            "messages": [
-                {
-                    "type": "text",
-                    "text": reply_text
-                }
-            ]
-        }
+            requests.post(
+                "https://api.line.me/v2/bot/message/reply",
+                headers=headers,
+                json=body,
+                timeout=10
+            )
 
-        requests.post(
-            "https://api.line.me/v2/bot/message/reply",
-            headers=headers,
-            json=body
-        )
+        return "OK"
 
-    return "OK"
+    except Exception as e:
+        print("Error:", str(e))
+        return "ERROR"
