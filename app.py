@@ -1,59 +1,64 @@
 from flask import Flask, request
 import os
 import requests
+import openai
 
 app = Flask(__name__)
 
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+openai.api_key = OPENAI_API_KEY
+
 
 @app.route("/")
 def home():
-    return "Health Line App is running"
+    return "Health Line AI Bot Running"
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.json
-    print("Received:", data)
 
-    try:
-        events = data["events"]
+    events = data.get("events", [])
 
-        for event in events:
-            if event["type"] == "message":
-                reply_token = event["replyToken"]
-                user_message = event["message"]["text"]
+    for event in events:
+        if event["type"] == "message":
 
-                reply(reply_token, f"你剛剛說：{user_message}")
+            user_message = event["message"]["text"]
+            reply_token = event["replyToken"]
 
-    except Exception as e:
-        print("Error:", e)
+            # 呼叫 OpenAI
+            ai_response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "你是HealthLine健康管理AI助手"},
+                    {"role": "user", "content": user_message}
+                ]
+            )
 
-    return "OK", 200
+            reply_text = ai_response.choices[0].message.content
 
-
-def reply(reply_token, text):
-
-    url = "https://api.line.me/v2/bot/message/reply"
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
-    }
-
-    data = {
-        "replyToken": reply_token,
-        "messages": [
-            {
-                "type": "text",
-                "text": text
+            # 回覆 LINE
+            headers = {
+                "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
+                "Content-Type": "application/json"
             }
-        ]
-    }
 
-    response = requests.post(url, headers=headers, json=data)
+            body = {
+                "replyToken": reply_token,
+                "messages": [
+                    {
+                        "type": "text",
+                        "text": reply_text
+                    }
+                ]
+            }
 
-    print(response.status_code, response.text)
+            requests.post(
+                "https://api.line.me/v2/bot/message/reply",
+                headers=headers,
+                json=body
+            )
 
-
-if __name__ == "__main__":
-    app.run()
+    return "OK"
