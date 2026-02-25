@@ -49,13 +49,16 @@ def webhook():
             reply_text = ai.choices[0].message.content
 
         except Exception as e:
-            print("OpenAI error:", str(e))
+    print("OpenAI error:", str(e))
 
-            reply_text = (
-                "⚠️ 健康管理系統暫時忙碌\n\n"
-                "請稍後再試。\n\n"
-                "HealthLine AI"
-            )
+    # 免費 fallback 回覆（不使用 OpenAI）
+    reply_text = (
+        "HealthLine 健康管理初步分析：\n\n"
+        "• 建議保持充足睡眠\n"
+        "• 每日適度運動\n"
+        "• 注意壓力管理\n\n"
+        "（AI進階分析暫時不可用）"
+    )
 
         headers = {
             "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
