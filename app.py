@@ -10,7 +10,7 @@ def home():
 def webhook():
     data = request.json
     print("Received:", data)
-    return "OK",200
+    return "OK", 200
 
 if __name__ == "__main__":
     app.run()
