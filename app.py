@@ -33,7 +33,7 @@ def webhook():
         # 安全呼叫 OpenAI
         try:
             ai = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4.1-mini",
                 messages=[
                     {
                         "role": "system",
