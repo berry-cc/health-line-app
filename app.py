@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
-import os, io, base64, json, hashlib, random, sqlite3, datetime
-from PIL import Image
-from openai import OpenAI
+from flask import Flask, render_template, request
+import os
 
 app = Flask(__name__)
 
+# ===============================
+# 首頁
+# ===============================
 @app.route("/")
 def home():
     heat_scores = {
@@ -18,8 +19,13 @@ def home():
         "z_arm_r": 52,
         "z_leg_l": 60,
         "z_leg_r": 66
-} 
-return render_template("index.html", result=None, heat_scores=heat_scores)
+    }
+
+    return render_template(
+        "index.html",
+        result=None,
+        heat_scores=heat_scores
+    )
 # --------------------
 # 基本設定
 # --------------------
