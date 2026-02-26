@@ -98,21 +98,16 @@ def home():
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    # 正確：用 form 接收
-    user_id = request.form.get("user_id", "").strip()
-
-    if not user_id:
-        return render_template("index.html", error="缺少 user_id")
-
     mode = request.form.get("mode", "health").strip()
 
-    # 正確：用 files 接收照片
     photo = request.files.get("photo")
 
     if not photo:
-        return render_template("index.html", error="請上傳照片")
+        return render_template(
+            "index.html",
+            error="請上傳照片"
+        )
 
-    # ===== 測試用假資料 =====
     import random
 
     result = {
@@ -132,12 +127,21 @@ def analyze():
         ]
     }
 
+    heat_scores = {
+        "z_head": random.randint(60, 95),
+        "z_face": random.randint(60, 95),
+        "z_chest": random.randint(60, 95),
+        "z_upper_abd": random.randint(60, 95),
+        "z_lower_abd": random.randint(60, 95),
+        "z_pelvis": random.randint(60, 95),
+        "z_arm_l": random.randint(60, 95),
+        "z_arm_r": random.randint(60, 95),
+        "z_leg_l": random.randint(60, 95),
+        "z_leg_r": random.randint(60, 95)
+    }
+
     return render_template(
-        "result.html",
-        result=result
+        "index.html",
+        result=result,
+        heat_scores=heat_scores
     )
-
-# =========================
-
-if __name__ == "__main__":
-    app.run(debug=True)
