@@ -1,261 +1,109 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VHDS｜健康管理測試版</title>
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --card:#111826;
-      --muted:#94a3b8;
-      --text:#e5e7eb;
-      --line:#1f2937;
-      --btn:#2563eb;
-      --btn2:#0ea5e9;
-      --danger:#ef4444;
-      --ok:#22c55e;
-    }
-    body{
-      margin:0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 20% 10%, #0f1a2a 0%, var(--bg) 50%, #070a0e 100%);
-      color:var(--text);
-    }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px;}
-    .top{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:14px 12px;border:1px solid var(--line);border-radius:16px;
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-    }
-    .brand{display:flex;flex-direction:column;gap:4px}
-    .brand h1{margin:0;font-size:18px;letter-spacing:.5px}
-    .brand p{margin:0;color:var(--muted);font-size:12px}
-    .grid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:14px;margin-top:14px;
-    }
-    @media (max-width: 900px){
-      .grid{grid-template-columns:1fr}
-    }
-    .card{
-      background: rgba(17,24,38,.85);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.35);
-    }
-    .card h2{margin:0 0 10px;font-size:15px}
-    .sub{color:var(--muted);font-size:12px;margin:0 0 12px;line-height:1.5}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-    input, select, textarea{
-      width:100%;
-      box-sizing:border-box;
-      background:#0b1220;
-      border:1px solid #233049;
-      color:var(--text);
-      padding:10px 10px;
-      border-radius:12px;
-      outline:none;
-      font-size:14px;
-    }
-    input:focus, select:focus, textarea:focus{border-color:#3b82f6}
-    textarea{min-height:72px;resize:vertical}
-    .col{flex:1;min-width:140px}
-    .btn{
-      background: linear-gradient(180deg, #3b82f6, var(--btn));
-      border:none;color:white;
-      padding:11px 14px;border-radius:12px;
-      cursor:pointer;font-weight:700;
-      width:100%;
-      margin-top:10px;
-    }
-    .btn:active{transform: translateY(1px)}
-    .btn2{
-      background: linear-gradient(180deg, #22d3ee, var(--btn2));
-    }
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:6px 10px;border-radius:999px;
-      border:1px solid #253552;background:#0b1220;color:var(--muted);
-      font-size:12px;
-    }
-    .warn{color:#fbbf24}
-    .ok{color:var(--ok)}
-    .danger{color:var(--danger)}
-    .divider{height:1px;background:var(--line);margin:12px 0}
-    .resultBox{
-      white-space:pre-wrap;
-      line-height:1.6;
-      font-size:14px;
-      background:#0b1220;
-      border:1px solid #233049;
-      padding:12px;
-      border-radius:14px;
-    }
-    .heatmap-card h3{margin:0 0 8px;font-size:14px}
-    .legend{color:var(--muted);font-size:12px}
-    .small{font-size:12px;color:var(--muted)}
-  </style>
+
+<meta charset="UTF-8">
+<title>VHDS Health</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/heatmap.js"></script>
+
+<style>
+
+body{
+background:#0b0f1a;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+button{
+margin:5px;
+padding:10px 20px;
+border-radius:20px;
+border:none;
+background:linear-gradient(45deg,#00aaff,#0066ff);
+color:white;
+cursor:pointer;
+}
+
+.lang button{
+background:rgba(255,255,255,0.1);
+}
+
+</style>
+
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <h1>VHDS｜自我健康管理測試版</h1>
-        <p>上傳照片 → 選擇分析 → 輸入必要資料 → 生成量化報告（非醫療診斷）</p>
-      </div>
-      <div class="pill">
-        <span class="ok">●</span>
-        <span>Service Online</span>
-      </div>
-    </div>
 
-    <div class="grid">
+<h1>VHDS Health自我健康管理</h1>
 
-      <!-- 左：輸入 -->
-      <div class="card">
-        <h2>上傳照片與選擇分析</h2>
-        <p class="sub">若你只上傳正面照，我們會以可取得資訊做分析，並提示你補全身照可提高準確度。</p>
+<div class="lang">
+<button onclick="setLang('zh')">ZH</button>
+<button onclick="setLang('en')">EN</button>
+<button onclick="setLang('ja')">日本語</button>
+<button onclick="setLang('ko')">한국어</button>
+</div>
 
-        <form method="POST" action="/analyze" enctype="multipart/form-data" id="mainForm">
-          <div class="row">
-            <div class="col">
-              <label>上傳照片（建議：光線充足）</label>
-              <input type="file" name="photo" accept="image/*" capture="environment" required />
-              <div class="small">手機可直接拍照上傳</div>
-            </div>
-          </div>
+<br>
 
-          <div class="divider"></div>
+<button onclick="run('health')">健康管理</button>
+<button onclick="run('skin')">肌膚管理</button>
+<button onclick="run('face')">面相分析</button>
+<button onclick="run('mind')">心理分析</button>
 
-          <div class="row">
-            <div class="col">
-              <label>選擇分析項目</label>
-              <select name="mode" id="modeSelect" required>
-                <option value="health" selected>1. 健康管理（需要身高/體重/年齡）</option>
-                <option value="skin">2. 肌膚管理（尚未開發）</option>
-                <option value="face">3. 面相學分析（尚未開發）</option>
-                <option value="psy">4. 心理學分析（尚未開發）</option>
-              </select>
-            </div>
-          </div>
+<br><br>
 
-          <!-- 只在健康管理顯示 -->
-          <div id="healthInputs" style="margin-top:12px;">
-            <div class="row">
-              <div class="col">
-                <label>年齡（歲）</label>
-                <input type="number" name="age" min="1" max="120" placeholder="例如：50" />
-              </div>
-              <div class="col">
-                <label>身高（cm）</label>
-                <input type="number" name="height" min="80" max="230" placeholder="例如：170" />
-              </div>
-              <div class="col">
-                <label>體重（kg）</label>
-                <input type="number" name="weight" min="20" max="300" placeholder="例如：70" />
-              </div>
-            </div>
-            <div class="small warn" style="margin-top:8px;">
-              ※ 健康管理會生成「10 大指標」報告，每項最多 80 字。
-            </div>
-          </div>
+<canvas id="radar" width="400" height="300"></canvas>
 
-          <div id="notReady" style="display:none;margin-top:12px;">
-            <div class="pill"><span class="warn">●</span><span>此功能尚未開發，先敬請期待。</span></div>
-          </div>
+<br>
 
-          <div style="margin-top:12px;">
-            <label>補充說明（可選）</label>
-            <textarea name="note" placeholder="例如：最近很疲勞、睡眠差、久坐、運動頻率…"></textarea>
-          </div>
+<canvas id="heatmap" width="300" height="500"></canvas>
 
-          <button class="btn btn2" type="submit">開始分析</button>
-        </form>
+<script>
 
-        <div class="divider"></div>
-        <div class="small">
-          <span class="warn">提醒：</span>本系統提供「健康管理參考」資訊，不提供醫療診斷。
-        </div>
-      </div>
+var lang="zh";
 
-      <!-- 右：熱區圖 + 結果 -->
-      <div class="card heatmap-card">
-        <h2>分析結果</h2>
+function setLang(l){
+lang=l;
+}
 
-        <!-- 熱區圖 -->
-        <h3>人體熱區圖（10 區）</h3>
-        <svg id="vhdsHeatmap" viewBox="0 0 220 520" width="260" height="520" style="max-width:100%;height:auto;">
-          <!-- silhouette -->
-          <path d="M110 20c20 0 35 15 35 35s-15 35-35 35-35-15-35-35 15-35 35-35z
-                   M70 90c10-10 20-15 40-15s30 5 40 15l10 40c10 40 10 70 0 110l-10 70
-                   c-5 40-5 60 0 95l5 50c1 12-8 22-20 22h-10c-10 0-18-7-20-17l-10-55
-                   -10 55c-2 10-10 17-20 17H95c-12 0-21-10-20-22l5-50c5-35 5-55 0-95
-                   l-10-70c-10-40-10-70 0-110l10-40z"
-                fill="#0b0f14" opacity="0.10"/>
+function run(mode){
 
-          <g opacity="0.92">
-            <ellipse id="z_head" cx="110" cy="52" rx="26" ry="26" fill="#dfe7f1"/>
-            <ellipse id="z_face" cx="110" cy="86" rx="22" ry="18" fill="#dfe7f1"/>
-            <rect id="z_chest" x="70" y="110" width="80" height="55" rx="18" fill="#dfe7f1"/>
-            <rect id="z_upper_abd" x="75" y="170" width="70" height="55" rx="18" fill="#dfe7f1"/>
-            <rect id="z_lower_abd" x="78" y="230" width="64" height="55" rx="18" fill="#dfe7f1"/>
-            <rect id="z_pelvis" x="74" y="290" width="72" height="55" rx="18" fill="#dfe7f1"/>
-            <rect id="z_arm_l" x="28" y="130" width="35" height="190" rx="18" fill="#dfe7f1"/>
-            <rect id="z_arm_r" x="157" y="130" width="35" height="190" rx="18" fill="#dfe7f1"/>
-            <rect id="z_leg_l" x="74" y="350" width="34" height="150" rx="18" fill="#dfe7f1"/>
-            <rect id="z_leg_r" x="112" y="350" width="34" height="150" rx="18" fill="#dfe7f1"/>
-          </g>
-        </svg>
-        <div id="heatLegend" class="legend"></div>
+fetch("/analyze",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({mode:mode,lang:lang})
+})
+.then(res=>res.json())
+.then(data=>{
 
-        <div class="divider"></div>
+drawRadar(data);
+drawHeatmap(data);
 
-        <!-- 結果文字 -->
-        {% if result %}
-          <div class="resultBox">{{ result }}</div>
-        {% else %}
-          <div class="resultBox" style="color:#94a3b8;">
-            目前尚無結果。上傳照片並點「開始分析」後，這裡會顯示報告。
-          </div>
-        {% endif %}
+});
+}
 
-        <div class="divider"></div>
-        <div class="small">
-          若要更準確：<span class="warn">請補上全身正面照</span>（站直、全身入鏡、光線均勻）。
-        </div>
-      </div>
+function drawRadar(data){
 
-    </div>
-  </div>
+new Chart(document.getElementById("radar"),{
 
-  <!-- 後端傳入的熱區分數（0~100）；若沒有就空物件 -->
-  <script>
-    const HEAT_SCORES = {{ heat_scores|tojson|safe if heat_scores else "{}" }};
-  </script>
-  <script src="/static/heatmap.js"></script>
+type:"radar",
 
-  <script>
-    // 切換模式：只有健康管理需要輸入身高/體重/年齡
-    const modeSelect = document.getElementById("modeSelect");
-    const healthInputs = document.getElementById("healthInputs");
-    const notReady = document.getElementById("notReady");
+data:{
+labels:data.map(d=>d.name),
+datasets:[{
+data:data.map(d=>d.score),
+borderColor:"cyan"
+}]
+}
 
-    function updateModeUI(){
-      const v = modeSelect.value;
-      if (v === "health"){
-        healthInputs.style.display = "block";
-        notReady.style.display = "none";
-      } else {
-        healthInputs.style.display = "none";
-        notReady.style.display = "block";
-      }
-    }
-    modeSelect.addEventListener("change", updateModeUI);
-    updateModeUI();
-  </script>
+});
+
+}
+
+</script>
+
 </body>
 </html>
