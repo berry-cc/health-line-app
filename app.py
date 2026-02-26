@@ -7,21 +7,19 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return render_template("index.html", result=None)
-heat_scores = {
-  "z_head": 72,
-  "z_face": 55,
-  "z_chest": 48,
-  "z_upper_abd": 62,
-  "z_lower_abd": 58,
-  "z_pelvis": 45,
-  "z_arm_l": 40,
-  "z_arm_r": 52,
-  "z_leg_l": 60,
-  "z_leg_r": 66
-}
-
-    return render_template("index.html", result=result, heat_scores=heat_scores)
+    heat_scores = {
+        "z_head": 72,
+        "z_face": 55,
+        "z_chest": 48,
+        "z_upper_abd": 62,
+        "z_lower_abd": 58,
+        "z_pelvis": 45,
+        "z_arm_l": 40,
+        "z_arm_r": 52,
+        "z_leg_l": 60,
+        "z_leg_r": 66
+} 
+return render_template("index.html", result=None, heat_scores=heat_scores)
 # --------------------
 # 基本設定
 # --------------------
