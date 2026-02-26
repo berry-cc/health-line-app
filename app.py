@@ -98,24 +98,44 @@ def home():
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    mode = request.json.get("mode")
-    lang = request.json.get("lang","zh")
+    # 正確：用 form 接收
+    user_id = request.form.get("user_id", "").strip()
 
-    indices = MODES[mode]["indices"]
+    if not user_id:
+        return render_template("index.html", error="缺少 user_id")
 
-    result = []
+    mode = request.form.get("mode", "health").strip()
 
-    for i in indices:
+    # 正確：用 files 接收照片
+    photo = request.files.get("photo")
 
-        score = random.randint(55,95)
+    if not photo:
+        return render_template("index.html", error="請上傳照片")
 
-        result.append({
-            "name":i,
-            "score":score,
-            "desc":get_desc(score,lang)
-        })
+    # ===== 測試用假資料 =====
+    import random
 
-    return jsonify(result)
+    result = {
+        "overall": random.randint(70, 95),
+        "mode": mode,
+        "items": [
+            {"name": "指標1", "score": random.randint(60, 95)},
+            {"name": "指標2", "score": random.randint(60, 95)},
+            {"name": "指標3", "score": random.randint(60, 95)},
+            {"name": "指標4", "score": random.randint(60, 95)},
+            {"name": "指標5", "score": random.randint(60, 95)},
+            {"name": "指標6", "score": random.randint(60, 95)},
+            {"name": "指標7", "score": random.randint(60, 95)},
+            {"name": "指標8", "score": random.randint(60, 95)},
+            {"name": "指標9", "score": random.randint(60, 95)},
+            {"name": "指標10", "score": random.randint(60, 95)}
+        ]
+    }
+
+    return render_template(
+        "result.html",
+        result=result
+    )
 
 # =========================
 
