@@ -1,21 +1,27 @@
-from flask import Flask, render_template, request
-import os, io, base64, json, hashlib, random
+from flask import Flask, render_template, request, redirect, url_for
+import os, io, base64, json, hashlib, random, sqlite3, datetime
 from PIL import Image
 from openai import OpenAI
 
 app = Flask(__name__)
 
+# --------------------
+# 基本設定
+# --------------------
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # 圖片壓縮：越小越快越省
 MAX_SIDE = 768
 JPEG_QUALITY = 70
-MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
-# ---------------------------
+DB_PATH = os.environ.get("VHDS_DB_PATH", "vhds.sqlite3")
+
+# --------------------
 # 指標定義（10項）
-# ---------------------------
+# --------------------
 INDICATORS = {
     "health": [
         "體脂風險指數","內臟脂肪風險指數","肌肉量充足度指數","基礎代謝效率指數","姿勢平衡指數",
@@ -41,6 +47,62 @@ def grade(score: int) -> str:
     if score >= 55: return "C"
     return "D"
 
+# --------------------
+# DB
+# --------------------
+def db_conn():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = db_conn()
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS analyses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        mode_key TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        overall INTEGER NOT NULL,
+        items_json TEXT NOT NULL
+    );
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_user_mode_time ON analyses(user_id, mode_key, created_at);")
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def save_analysis(user_id: str, mode_key: str, overall: int, items: list):
+    conn = db_conn()
+    conn.execute(
+        "INSERT INTO analyses (user_id, mode_key, created_at, overall, items_json) VALUES (?, ?, ?, ?, ?)",
+        (user_id, mode_key, datetime.datetime.utcnow().isoformat(), int(overall), json.dumps(items, ensure_ascii=False))
+    )
+    conn.commit()
+    conn.close()
+
+def get_last_two(user_id: str, mode_key: str):
+    conn = db_conn()
+    rows = conn.execute(
+        "SELECT * FROM analyses WHERE user_id=? AND mode_key=? ORDER BY created_at DESC LIMIT 2",
+        (user_id, mode_key)
+    ).fetchall()
+    conn.close()
+    return rows  # [latest, previous] 或 [latest] 或 []
+
+def get_recent(user_id: str, limit: int = 20):
+    conn = db_conn()
+    rows = conn.execute(
+        "SELECT * FROM analyses WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+        (user_id, limit)
+    ).fetchall()
+    conn.close()
+    return rows
+
+# --------------------
+# 圖片處理
+# --------------------
 def compress_image_to_data_url(file_storage) -> str:
     img = Image.open(file_storage.stream).convert("RGB")
     w, h = img.size
@@ -52,13 +114,14 @@ def compress_image_to_data_url(file_storage) -> str:
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"data:image/jpeg;base64,{b64}"
 
+# --------------------
+# 無OpenAI時：可重現示範數據
+# --------------------
 def stable_fake_result(mode_key: str, seed_text: str):
-    """沒有 OpenAI Key 時，依 seed 產生可重現的測試結果"""
     seed = int(hashlib.md5(seed_text.encode("utf-8")).hexdigest()[:8], 16)
     rng = random.Random(seed)
     labels = INDICATORS[mode_key]
-    items = []
-    scores = []
+    items, scores = [], []
     for name in labels:
         s = rng.randint(62, 90)
         scores.append(s)
@@ -69,20 +132,25 @@ def stable_fake_result(mode_key: str, seed_text: str):
             "desc": "趨勢正常，建議持續追蹤"
         })
     overall = round(sum(scores) / len(scores))
-    return {"overall": overall, "items": items, "note": "（測試版：未串OpenAI，為示範數據）"}
+    return {"overall": overall, "items": items, "note": "（測試示範：未串OpenAI）"}
 
+# --------------------
+# OpenAI JSON輸出
+# --------------------
 def build_system_prompt(mode_key: str) -> str:
     labels = INDICATORS[mode_key]
     label_text = "、".join(labels)
     return f"""你是「VHDS」分析助手（繁體中文）。只輸出JSON，不要多餘文字。
 任務：根據使用者上傳的照片 + 使用者輸入資料，生成「10項量化指標」報告。
-重要規則：
-- 不做醫療診斷、不下疾病結論，不替代醫師。
-- 每項指標分數為 0~100 的整數，並給等級 A/B/C/D（A最高）。
-- 每項指標 desc 為繁體中文，<=30個字，簡短、務實、非診斷。
-- overall 為 0~100 整數（可取平均或綜合）。
 
-你必須輸出符合以下JSON格式（嚴格一致）：
+規則：
+- 不做醫療診斷、不下疾病結論，不替代醫師。
+- 每項 score 為 0~100 的整數。
+- 每項 grade 為 A/B/C/D（A最高）。
+- 每項 desc 繁體中文 <=30字，務實、非診斷。
+- overall 為 0~100 整數。
+
+必須輸出以下JSON格式（嚴格一致）：
 {{
   "overall": 0,
   "items": [
@@ -93,12 +161,12 @@ def build_system_prompt(mode_key: str) -> str:
   "note": "一句提醒：若要更準確請提供全身照/更多資料（<=30字）"
 }}
 
-本次允許的10個指標名稱只能從這些裡面選，且必須全部包含一次：{label_text}
+10個指標名稱只能從這些裡面選，且必須全部包含一次：{label_text}
 """
 
 def call_openai(mode_key: str, data_url: str, user_context: str):
     sys = build_system_prompt(mode_key)
-    user = f"使用者補充資料：{user_context}\n請依規則輸出JSON。"
+    user = f"使用者資料：{user_context}\n請依規則輸出JSON。"
     resp = client.chat.completions.create(
         model=MODEL,
         temperature=0.2,
@@ -111,16 +179,12 @@ def call_openai(mode_key: str, data_url: str, user_context: str):
         ]
     )
     text = resp.choices[0].message.content.strip()
-    # 容錯：去掉可能包在 
-json 
- 的情況
+    # 容錯：去掉 ```json
     if text.startswith("```"):
-        text = text.strip("`")
-        text = text.replace("json", "", 1).strip()
+        text = text.strip("`").replace("json", "", 1).strip()
     return json.loads(text)
 
 def normalize_result(mode_key: str, result: dict):
-    """確保items順序/名稱正確，補缺漏"""
     labels = INDICATORS[mode_key]
     items_by_name = {it.get("name"): it for it in result.get("items", []) if isinstance(it, dict)}
     items = []
@@ -137,19 +201,16 @@ def normalize_result(mode_key: str, result: dict):
     note = (result.get("note") or "若要更準確，建議補充全身照")[:30]
     return {"overall": overall, "items": items, "note": note}
 
+# --------------------
+# 人體熱區（示意）
+# --------------------
 def heat_color(score: int) -> str:
-    # 簡單四段色：紅/橘/黃/綠
     if score < 55: return "#ef4444"
     if score < 70: return "#f97316"
     if score < 85: return "#f59e0b"
     return "#22c55e"
 
 def build_heatmap_regions(mode_key: str, items: list):
-    """
-    回傳人體熱區顏色（簡版示意，不診斷）
-    用幾個指標映射到頭/胸/腹/骨盆/四肢等區域
-    """
-    # 取分數用（找不到就70）
     def get(name):
         for it in items:
             if it["name"] == name:
@@ -194,23 +255,64 @@ def build_heatmap_regions(mode_key: str, items: list):
         "legs": heat_color(legs),
     }
 
+# --------------------
+# 比較：本次 vs 上次
+# --------------------
+def compute_delta(current_items, prev_items):
+    prev_map = {it["name"]: it["score"] for it in prev_items} if prev_items else {}
+    out = []
+    for it in current_items:
+        prev = prev_map.get(it["name"])
+        delta = None if prev is None else (it["score"] - prev)
+        out.append({
+            **it,
+            "prev": prev,
+            "delta": delta
+        })
+    return out
+
+# --------------------
+# Routes
+# --------------------
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
+@app.route("/history", methods=["GET"])
+def history():
+    user_id = request.args.get("uid", "").strip()
+    if not user_id:
+        return redirect(url_for("index"))
+    rows = get_recent(user_id, 30)
+    # 解析 items
+    records = []
+    for r in rows:
+        items = json.loads(r["items_json"])
+        records.append({
+            "created_at": r["created_at"],
+            "mode_key": r["mode_key"],
+            "overall": r["overall"],
+            "items": items
+        })
+    return render_template("history.html", records=records, user_id=user_id)
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    # mode: 1 health, 2 skin, 3 fortune, 4 social_psy
+    # 必須有 user_id（前端用localStorage自動生成）
+    user_id = request.form.get("user_id", "").strip()
+    if not user_id:
+        return render_template("index.html", error="缺少使用者識別碼（請刷新頁面再試）。")
+
     mode = request.form.get("mode", "").strip()
     mode_key = {"1": "health", "2": "skin", "3": "fortune", "4": "social_psy"}.get(mode)
     if not mode_key:
         return render_template("index.html", error="請選擇分析類型。")
 
-    # photo (可選：若沒有照片也能先生成，但會提示補照片)
+    # 取得照片（可選）
     photo = request.files.get("photo")
     has_photo = photo and photo.filename
 
-    # 收集輸入欄位（依你設計流程）
+    # 輸入欄位（單一欄位，不重複name，避免表單覆蓋）
     age = request.form.get("age", "").strip()
     sex = request.form.get("sex", "").strip()       # 1男 2女
     height = request.form.get("height", "").strip()
@@ -218,6 +320,10 @@ def analyze():
     job = request.form.get("job", "").strip()
     extro = request.form.get("extro", "").strip()   # 1-5
 
+    # 必填規則（依你流程）
+    if mode_key == "health":
+        if not (age and sex and height and weight):
+            return render_template("index.html", error="健康管理需填：年齡、性別、身高、體重。")
     # 建立 user_context（給OpenAI用）
     ctx_parts = []
     if age: ctx_parts.append(f"年齡:{age}")
@@ -228,18 +334,6 @@ def analyze():
     if extro: ctx_parts.append(f"外向程度:{extro}/5")
     user_context = "、".join(ctx_parts) if ctx_parts else "未提供"
 
-    # 檢查必填（你要的流程）
-    if mode_key == "health":
-        if not (age and height and weight and sex):
-            return render_template("index.html", error="健康管理需填：年齡、性別、身高、體重。")
-    if mode_key == "fortune":
-        if not (age and sex):
-            return render_template("index.html", error="面相運勢需填：年齡、性別。")
-    if mode_key == "social_psy":
-        if not (age and sex and job and extro):
-            return render_template("index.html", error="人際心理需填：年齡、性別、職業、外向程度。")
-
-    # 取得圖片 data_url（若沒有照片，就用空）
     data_url = None
     if has_photo:
         try:
@@ -247,14 +341,14 @@ def analyze():
         except Exception:
             data_url = None
 
-    # 產生結果：有Key就用OpenAI；沒有就用測試資料
-    seed_text = f"{mode_key}|{user_context}|{'has_photo' if data_url else 'no_photo'}"
+    seed_text = f"{user_id}|{mode_key}|{user_context}|{'has_photo' if data_url else 'no_photo'}"
+
+    # 取得結果
     try:
         if client and data_url:
             raw = call_openai(mode_key, data_url, user_context)
             result = normalize_result(mode_key, raw)
         else:
-            # 沒有Key或沒有照片：給示範資料，但提醒補照片
             result = stable_fake_result(mode_key, seed_text)
             if not data_url:
                 result["note"] = "缺照片：先依輸入推估，補照片更準"
@@ -262,10 +356,21 @@ def analyze():
         result = stable_fake_result(mode_key, seed_text)
         result["note"] = "暫時無法AI分析，已給示範結果"
 
+    # 儲存到DB（歷史追蹤）
+    save_analysis(user_id, mode_key, result["overall"], result["items"])
+
+    # 取得最近兩筆，做比較
+    rows = get_last_two(user_id, mode_key)
+    latest = rows[0]
+    prev = rows[1] if len(rows) > 1 else None
+
+    prev_items = json.loads(prev["items_json"]) if prev else None
+    items_with_delta = compute_delta(result["items"], prev_items)
+
     # 熱區顏色
     heat = build_heatmap_regions(mode_key, result["items"])
 
-    # 給前端：labels, scores
+    # radar資料
     labels = [it["name"] for it in result["items"]]
     scores = [it["score"] for it in result["items"]]
 
@@ -277,19 +382,24 @@ def analyze():
         "social_psy": "人際心理管理分析報告"
     }[mode_key]
 
-    # 額外提示：若不是全身照（我們無法100%判斷），但你要提示，就固定用一句不強制
     photo_hint = "若要更準確建議補充：正面全身照（自然光、無濾鏡）。"
+
+    prev_overall = int(prev["overall"]) if prev else None
+    overall_delta = None if prev_overall is None else (int(result["overall"]) - prev_overall)
 
     return render_template(
         "report.html",
         title=title,
         overall=result["overall"],
+        prev_overall=prev_overall,
+        overall_delta=overall_delta,
         note=result.get("note", ""),
-        items=result["items"],
+        items=items_with_delta,
         labels=json.dumps(labels, ensure_ascii=False),
         scores=json.dumps(scores),
         heat=heat,
-        photo_hint=photo_hint
+        photo_hint=photo_hint,
+        user_id=user_id
     )
 
 if __name__ == "__main__":
