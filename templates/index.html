@@ -1,298 +1,874 @@
-<!DOCTYPE html>
-<html lang="zh">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
+  <title>VHDS Health 自我健康管理</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Chart.js for Radar -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<title>VHDS Health 自我健康管理</title>
+  <style>
+    :root{
+      --bg:#05070d;
+      --panel:rgba(255,255,255,.04);
+      --panel2:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.10);
+      --text:#ffffff;
+      --muted:rgba(255,255,255,.72);
+      --accent1:#00c6ff;
+      --accent2:#0072ff;
+      --glow:rgba(0,170,255,.55);
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(900px 500px at 50% 20%, rgba(0,198,255,.18), transparent 65%),
+        radial-gradient(700px 400px at 20% 80%, rgba(0,114,255,.10), transparent 60%),
+        radial-gradient(600px 350px at 80% 85%, rgba(0,198,255,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      padding:24px 18px 40px;
+    }
+    .wrap{max-width:980px;margin:0 auto}
+    .brand{
+      text-align:center;
+      margin:10px 0 22px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:34px;
+      font-weight:800;
+      letter-spacing:.5px;
+      text-shadow:0 0 22px rgba(0,170,255,.25);
+    }
+    .brand .sub{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:14px;
+    }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    /* Buttons (premium glow) */
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      color:#fff;
+      background:linear-gradient(90deg,var(--accent1),var(--accent2));
+      padding:14px 22px;
+      border-radius:14px;
+      font-weight:800;
+      font-size:16px;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(0,114,255,.22), 0 0 0 rgba(0,0,0,0);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 12px 34px rgba(0,114,255,.30)}
+    .btn:active{transform:translateY(0px);filter:brightness(.98)}
+    .btn-ghost{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 0 20px rgba(0,170,255,.10);
+      font-weight:800;
+    }
+    .btn-ghost.active{
+      border-color:rgba(0,198,255,.55);
+      box-shadow:0 0 28px rgba(0,198,255,.25);
+      background:linear-gradient(90deg,rgba(0,198,255,.16),rgba(0,114,255,.10));
+    }
 
-<style>
+    /* Layout */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:16px;
+      align-items:start;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background:linear-gradient(180deg,var(--panel),rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 18px 55px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+    }
+    .card h2{
+      margin:0 0 8px;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .hint{
+      margin:0 0 14px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .divider{
+      height:1px;background:rgba(255,255,255,.10);
+      margin:14px 0;
+    }
+    label{display:block;color:rgba(255,255,255,.85);font-weight:700;font-size:13px;margin-bottom:6px}
+    input[type="number"], select, input[type="text"]{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);
+      color:#fff;
+      outline:none;
+    }
+    input[type="file"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.22);
+      background:rgba(0,0,0,.18);
+      color:#fff;
+    }
+    .small{font-size:12px;color:rgba(255,255,255,.66);margin-top:6px}
 
-body{
-    background:#0b0f14;
-    color:white;
-    font-family:-apple-system,BlinkMacSystemFont;
-    text-align:center;
-}
+    /* Results */
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      box-shadow:0 0 28px rgba(0,170,255,.10);
+      font-weight:800;
+    }
+    .badge b{
+      font-size:18px;
+      background:linear-gradient(90deg,var(--accent1),var(--accent2));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .err{
+      color:#fff;
+      background:rgba(239,68,68,.12);
+      border:1px solid rgba(239,68,68,.35);
+      padding:10px 12px;
+      border-radius:14px;
+      margin-bottom:10px;
+      font-weight:700;
+    }
+    .ok{
+      color:#fff;
+      background:rgba(34,197,94,.12);
+      border:1px solid rgba(34,197,94,.35);
+      padding:10px 12px;
+      border-radius:14px;
+      margin-bottom:10px;
+      font-weight:700;
+    }
 
-.container{
-    max-width:420px;
-    margin:auto;
-    padding:20px;
-}
+    /* Human Heatmap Canvas Container */
+    .humanWrap{
+      position:relative;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      background:
+        radial-gradient(700px 420px at 50% 20%, rgba(0,198,255,.12), transparent 60%),
+        rgba(255,255,255,.02);
+      box-shadow: inset 0 0 80px rgba(0,170,255,.08);
+      padding:14px;
+    }
+    .humanTitle{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px
+    }
+    .humanTitle .t{
+      font-weight:900;letter-spacing:.2px
+    }
+    .humanTitle .mini{
+      color:rgba(255,255,255,.70);font-size:12px
+    }
+    .canvasBox{
+      position:relative;
+      width:100%;
+      aspect-ratio: 3/4;
+      max-height:520px;
+      margin:0 auto;
+    }
+    canvas#humanCanvas{
+      width:100%;height:100%;
+      display:block;
+      border-radius:14px;
+    }
 
-button{
+    /* Radar */
+    .radarWrap{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      background:rgba(255,255,255,.02);
+      box-shadow: inset 0 0 80px rgba(0,170,255,.08);
+      padding:14px;
+    }
+    .radarBox{width:100%;max-width:520px;margin:0 auto}
+    canvas#radarChart{width:100%;height:auto}
+    .note{
+      color:rgba(255,255,255,.65);
+      font-size:12px;
+      line-height:1.5;
+      margin-top:10px;
+    }
 
-    background:linear-gradient(45deg,#00eaff,#0078ff);
-
-    border:none;
-
-    padding:12px;
-
-    margin:5px;
-
-    color:white;
-
-    border-radius:10px;
-
-    font-size:14px;
-
-    cursor:pointer;
-
-    box-shadow:0 0 15px rgba(0,234,255,0.4);
-}
-
-canvas{
-    margin-top:20px;
-}
-
-#heatmapCanvas{
-
-    filter: drop-shadow(0 0 20px rgba(255,80,80,0.7));
-
-}
-
-#radarChart{
-
-    filter: drop-shadow(0 0 20px rgba(0,234,255,0.7));
-
-}
-
-</style>
-
+    /* Indicator list */
+    .indList{margin-top:12px;display:grid;gap:10px}
+    .ind{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.03);
+      padding:12px;
+    }
+    .indTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .indName{font-weight:900}
+    .scorePill{
+      padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+      font-weight:900;
+    }
+    .indDesc{margin-top:6px;color:rgba(255,255,255,.72);font-size:13px;line-height:1.5}
+  </style>
 </head>
 
 <body>
+  <div class="wrap">
+    <div class="brand">
+      <h1 id="t_title">VHDS Health 自我健康管理</h1>
+      <div class="sub" id="t_sub">四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）</div>
+    </div>
 
-<div class="container">
+    <!-- Language Buttons -->
+    <div class="row" style="justify-content:center;margin-bottom:16px;">
+      <button type="button" class="btn btn-ghost active" id="lang_zh" onclick="setLang('zh')">中文</button>
+      <button type="button" class="btn btn-ghost" id="lang_en" onclick="setLang('en')">English</button>
+      <button type="button" class="btn btn-ghost" id="lang_jp" onclick="setLang('jp')">日本語</button>
+      <button type="button" class="btn btn-ghost" id="lang_kr" onclick="setLang('kr')">한국어</button>
+    </div>
 
-<h2>VHDS Health 自我健康管理</h2>
+    <div class="grid">
+      <!-- LEFT: Inputs -->
+      <div class="card">
+        <h2 id="t_upload_title">上傳照片與選擇分析</h2>
+        <p class="hint" id="t_upload_hint">
+          建議光線充足、正面清晰。若未上傳全身照，仍可執行量化評估與視覺化展示。
+        </p>
 
-<input type="file" id="photo">
+        <!-- Errors / OK -->
+        {% if error %}
+          <div class="err">{{ error }}</div>
+        {% endif %}
+        {% if ok %}
+          <div class="ok">{{ ok }}</div>
+        {% endif %}
 
-<br><br>
+        <form method="POST" action="/analyze" enctype="multipart/form-data" id="mainForm">
+          <!-- hidden: language -->
+          <input type="hidden" name="lang" id="langInput" value="zh" />
 
-<button onclick="startAnalysis()">開始分析</button>
+          <!-- hidden: user_id (if you use it in backend; harmless if ignored) -->
+          <input type="hidden" name="user_id" id="userIdInput" value="" />
 
-<br><br>
+          <label id="t_photo_label">上傳照片（建議：光線充足）</label>
+          <input type="file" name="photo" accept="image/*" capture="environment" />
+          <div class="small" id="t_photo_small">手機可直接拍照或選擇相簿</div>
 
-<!-- 語言按鈕 -->
+          <div class="divider"></div>
 
-<button onclick="setLang('zh')">中文</button>
-<button onclick="setLang('en')">English</button>
-<button onclick="setLang('jp')">日本語</button>
-<button onclick="setLang('kr')">한국어</button>
+          <label id="t_mode_label">選擇分析模式</label>
+          <select name="mode" id="modeSelect" required>
+            <option value="health" selected id="t_mode_health">1. 健康管理</option>
+            <option value="skin" id="t_mode_skin">2. 肌膚管理</option>
+            <option value="face" id="t_mode_face">3. 面相學分析</option>
+            <option value="psy" id="t_mode_psy">4. 心理學分析</option>
+          </select>
 
-<br><br>
+          <div id="healthInputs" style="margin-top:12px;">
+            <div class="row" style="gap:12px;">
+              <div style="flex:1;min-width:150px;">
+                <label id="t_age_label">年齡（歲）</label>
+                <input type="number" name="age" min="1" max="120" placeholder="例如：50" />
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <label id="t_height_label">身高（cm）</label>
+                <input type="number" name="height" min="80" max="230" placeholder="例如：170" />
+              </div>
+            </div>
 
-<!-- 人體熱區 -->
+            <div class="row" style="gap:12px;margin-top:10px;">
+              <div style="flex:1;min-width:150px;">
+                <label id="t_weight_label">體重（kg）</label>
+                <input type="number" name="weight" min="10" max="300" placeholder="例如：65" />
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <label id="t_waist_label">腰圍（吋）</label>
+                <input type="number" name="waist" min="10" max="80" placeholder="例如：34" />
+              </div>
+            </div>
+          </div>
 
-<canvas id="heatmapCanvas" width="250" height="400"></canvas>
+          <div class="divider"></div>
 
-<!-- 雷達圖 -->
+          <div class="row" style="justify-content:center;">
+            <button type="submit" class="btn" id="t_submit">開始分析</button>
+          </div>
+        </form>
+      </div>
 
-<canvas id="radarChart" width="320" height="320"></canvas>
+      <!-- RIGHT: Visuals -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center;">
+          <div class="badge">
+            <span id="t_overall_label">總評分</span>
+            <b id="overallScoreText">{{ overall if overall is not none else 0 }}</b>
+          </div>
+          <div style="color:rgba(255,255,255,.65);font-size:12px;">
+            <span id="t_mode_now">模式：</span>
+            <span style="font-weight:900;" id="modeNowText">{{ mode_name if mode_name else 'health' }}</span>
+          </div>
+        </div>
 
-<div id="result"></div>
+        <div class="divider"></div>
 
-</div>
+        <!-- Human Heatmap -->
+        <div class="humanWrap">
+          <div class="humanTitle">
+            <div class="t" id="t_heat_title">人體熱區圖</div>
+            <div class="mini" id="t_heat_hint">發光 + 呼吸脈動（展示用）</div>
+          </div>
+          <div class="canvasBox">
+            <canvas id="humanCanvas" width="600" height="800"></canvas>
+          </div>
+        </div>
 
-<script>
+        <div class="divider"></div>
 
-let currentLang="zh";
+        <!-- Radar -->
+        <div class="radarWrap">
+          <div class="humanTitle">
+            <div class="t" id="t_radar_title">雷達圖</div>
+            <div class="mini" id="t_radar_hint">發光動畫（展示用）</div>
+          </div>
+          <div class="radarBox">
+            <canvas id="radarChart"></canvas>
+          </div>
+          <div class="note" id="t_note">
+            本頁為「正式展示版」架構：分數與指標由後端回傳；若後端未回傳，前端會用預設示範值顯示。
+          </div>
+        </div>
 
-function setLang(lang){
-    currentLang=lang;
-}
+        <!-- Indicator list -->
+        <div class="divider"></div>
+        <h2 style="margin:0 0 10px;" id="t_items_title">10 指標（60字內說明）</h2>
+        <div class="indList" id="itemsList"></div>
+      </div>
+    </div>
+  </div>
 
-async function startAnalysis(){
+  <!-- Backend-provided data (safe defaults) -->
+  <script>
+    // Backend can inject:
+    // - HEAT_SCORES: { z_head:72, ... }
+    // - RADAR_LABELS: [...]
+    // - RADAR_VALUES: [...]
+    // - ITEMS: [{name,score,desc},...]
+    // - LANG: "zh|en|jp|kr"
+    // - MODE: "health|skin|face|psy"
+    const HEAT_SCORES = {{ heat_scores|tojson if heat_scores is defined else '{}' }};
+    const RADAR_LABELS = {{ radar_labels|tojson if radar_labels is defined else '[]' }};
+    const RADAR_VALUES = {{ radar_values|tojson if radar_values is defined else '[]' }};
+    const ITEMS = {{ items|tojson if items is defined else '[]' }};
+    const LANG = {{ lang|tojson if lang is defined else '"zh"' }};
+    const MODE = {{ mode|tojson if mode is defined else '"health"' }};
+  </script>
 
-    const file=document.getElementById("photo").files[0];
+  <!-- Heatmap effect -->
+  <script src="/static/heatmap.js"></script>
 
-    const formData=new FormData();
+  <script>
+    // ===== Language dictionary (UI only). 4 languages. =====
+    const I18N = {
+      zh:{
+        title:"VHDS Health 自我健康管理",
+        sub:"四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）",
+        uploadTitle:"上傳照片與選擇分析",
+        uploadHint:"建議光線充足、正面清晰。若未上傳全身照，仍可執行量化評估與視覺化展示。",
+        photoLabel:"上傳照片（建議：光線充足）",
+        photoSmall:"手機可直接拍照或選擇相簿",
+        modeLabel:"選擇分析模式",
+        modeHealth:"1. 健康管理",
+        modeSkin:"2. 肌膚管理",
+        modeFace:"3. 面相學分析",
+        modePsy:"4. 心理學分析",
+        age:"年齡（歲）",
+        height:"身高（cm）",
+        weight:"體重（kg）",
+        waist:"腰圍（吋）",
+        submit:"開始分析",
+        overall:"總評分",
+        modeNow:"模式：",
+        heatTitle:"人體熱區圖",
+        heatHint:"發光 + 呼吸脈動（展示用）",
+        radarTitle:"雷達圖",
+        radarHint:"發光動畫（展示用）",
+        note:"本頁為「正式展示版」架構：分數與指標由後端回傳；若後端未回傳，前端會用預設示範值顯示。",
+        itemsTitle:"10 指標（60字內說明）",
+      },
+      en:{
+        title:"VHDS Health Self-Management",
+        sub:"4 modes · 10 metrics each · Quant scores + Visuals (Heat + Radar)",
+        uploadTitle:"Upload Photo & Select Mode",
+        uploadHint:"Use clear front-facing photo under good lighting. Full-body is optional for demo visuals.",
+        photoLabel:"Upload Photo (good lighting)",
+        photoSmall:"You can take a photo or pick from album",
+        modeLabel:"Select Mode",
+        modeHealth:"1. Health Management",
+        modeSkin:"2. Skin Management",
+        modeFace:"3. Face Reading",
+        modePsy:"4. Psychology",
+        age:"Age",
+        height:"Height (cm)",
+        weight:"Weight (kg)",
+        waist:"Waist (inch)",
+        submit:"Analyze",
+        overall:"Overall",
+        modeNow:"Mode:",
+        heatTitle:"Body Heat Zones",
+        heatHint:"Glow + Breathing pulse (demo)",
+        radarTitle:"Radar Chart",
+        radarHint:"Glow animation (demo)",
+        note:"This is a production-style demo. Backend may provide scores; otherwise defaults are used.",
+        itemsTitle:"10 Metrics (≤ 60 chars/line)",
+      },
+      jp:{
+        title:"VHDS Health 自己健康管理",
+        sub:"4モード · 各10指標 · 定量スコア + 可視化（ヒート + レーダー）",
+        uploadTitle:"写真アップロード・分析選択",
+        uploadHint:"明るい環境で正面を鮮明に。全身写真は任意です（デモ）。",
+        photoLabel:"写真をアップロード（明るい環境）",
+        photoSmall:"撮影またはアルバムから選択",
+        modeLabel:"分析モード",
+        modeHealth:"1. 健康管理",
+        modeSkin:"2. 肌管理",
+        modeFace:"3. 顔相分析",
+        modePsy:"4. 心理分析",
+        age:"年齢",
+        height:"身長（cm）",
+        weight:"体重（kg）",
+        waist:"ウエスト（inch）",
+        submit:"分析開始",
+        overall:"総合",
+        modeNow:"モード：",
+        heatTitle:"人体ヒートゾーン",
+        heatHint:"発光＋呼吸パルス（デモ）",
+        radarTitle:"レーダーチャート",
+        radarHint:"発光アニメ（デモ）",
+        note:"正式版デモ構成：バックエンドが返さない場合は既定値で表示します。",
+        itemsTitle:"10指標（60字以内）",
+      },
+      kr:{
+        title:"VHDS Health 자기 건강관리",
+        sub:"4 모드 · 모드당 10 지표 · 점수 + 시각화(히트 + 레이더)",
+        uploadTitle:"사진 업로드 및 분석 선택",
+        uploadHint:"밝은 환경에서 정면이 선명하게. 전신 사진은 선택(데모).",
+        photoLabel:"사진 업로드(밝은 환경)",
+        photoSmall:"촬영 또는 앨범에서 선택",
+        modeLabel:"모드 선택",
+        modeHealth:"1. 건강 관리",
+        modeSkin:"2. 피부 관리",
+        modeFace:"3. 관상 분석",
+        modePsy:"4. 심리 분석",
+        age:"나이",
+        height:"키(cm)",
+        weight:"몸무게(kg)",
+        waist:"허리(inch)",
+        submit:"분석 시작",
+        overall:"총점",
+        modeNow:"모드:",
+        heatTitle:"인체 열구역",
+        heatHint:"발광 + 호흡 펄스(데모)",
+        radarTitle:"레이더 차트",
+        radarHint:"발광 애니메이션(데모)",
+        note:"정식 데모 구조: 백엔드 점수가 없으면 기본값으로 표시됩니다.",
+        itemsTitle:"10 지표(60자 이내)",
+      }
+    };
 
-    formData.append("photo",file);
-
-    formData.append("mode","health");
-
-    formData.append("lang",currentLang);
-
-    const res=await fetch("/analyze",{method:"POST",body:formData});
-
-    const data=await res.json();
-
-    showRadar(data);
-
-    showHeatmap(data);
-
-    showText(data);
-
-}
-
-function showText(data){
-
-    let html="";
-
-    data.indicators.forEach(i=>{
-
-        html+=`<p>${i.name} ${i.score}/100<br>${i.desc}</p>`;
-
-    });
-
-    document.getElementById("result").innerHTML=html;
-
-}
-
-/* 雷達圖發光版本 */
-
-let radarChart=null;
-
-function showRadar(data){
-
-    const ctx=document.getElementById("radarChart").getContext("2d");
-
-    const values=data.indicators.map(i=>i.score);
-
-    const gradient=ctx.createRadialGradient(
-        160,160,20,
-        160,160,160
-    );
-
-    gradient.addColorStop(0,"rgba(0,234,255,0.9)");
-    gradient.addColorStop(0.5,"rgba(0,150,255,0.4)");
-    gradient.addColorStop(1,"rgba(0,0,0,0)");
-
-    if(radarChart){
-        radarChart.destroy();
+    // ===== Default demo data (when backend doesn’t return) =====
+    function demoHeat(){
+      return {
+        z_head:72, z_face:55, z_chest:48, z_upper_abd:62, z_lower_abd:58,
+        z_pelvis:45, z_arm_l:40, z_arm_r:52, z_leg_l:60, z_leg_r:66
+      };
+    }
+    function demoRadar(){
+      return {
+        labels:["Energy","Recovery","Metabolism","Skin","Stress","Focus","Posture","Circulation","Sleep","Resilience"],
+        values:[72,60,58,55,52,63,50,62,57,66]
+      };
+    }
+    function demoItems(){
+      // 10 items, each desc <= 60 chars (approx)
+      return [
+        {name:"活力指數",score:72,desc:"反映日常精神與體能穩定度，重視持續性。"},
+        {name:"恢復指數",score:60,desc:"運動或勞累後回復速度，與睡眠品質相關。"},
+        {name:"代謝指數",score:58,desc:"熱量利用效率與體重趨勢的綜合評估。"},
+        {name:"肌膚指數",score:55,desc:"水潤、光澤與粗糙度的量化呈現。"},
+        {name:"壓力負荷",score:52,desc:"壓力與疲勞累積程度，建議配合放鬆。"},
+        {name:"專注表現",score:63,desc:"注意力與思緒清晰度的穩定度評估。"},
+        {name:"姿態平衡",score:50,desc:"肩頸腰背的緊繃傾向與平衡提示。"},
+        {name:"循環狀態",score:62,desc:"末梢循環與體感溫度分布的整體表現。"},
+        {name:"睡眠品質",score:57,desc:"入睡、深睡與醒後精神的綜合量化。"},
+        {name:"韌性指數",score:66,desc:"面對壓力與變動的調適能力與穩定度。"},
+      ];
     }
 
-    radarChart=new Chart(ctx,{
+    // ===== Apply language UI =====
+    function applyLang(lang){
+      const d = I18N[lang] || I18N.zh;
+      document.documentElement.lang = (lang==="zh" ? "zh" : (lang==="en"?"en":(lang==="jp"?"ja":"ko")));
+      document.getElementById("t_title").textContent = d.title;
+      document.getElementById("t_sub").textContent = d.sub;
+      document.getElementById("t_upload_title").textContent = d.uploadTitle;
+      document.getElementById("t_upload_hint").textContent = d.uploadHint;
+      document.getElementById("t_photo_label").textContent = d.photoLabel;
+      document.getElementById("t_photo_small").textContent = d.photoSmall;
+      document.getElementById("t_mode_label").textContent = d.modeLabel;
+      document.getElementById("t_mode_health").textContent = d.modeHealth;
+      document.getElementById("t_mode_skin").textContent = d.modeSkin;
+      document.getElementById("t_mode_face").textContent = d.modeFace;
+      document.getElementById("t_mode_psy").textContent = d.modePsy;
+      document.getElementById("t_age_label").textContent = d.age;
+      document.getElementById("t_height_label").textContent = d.height;
+      document.getElementById("t_weight_label").textContent = d.weight;
+      document.getElementById("t_waist_label").textContent = d.waist;
+      document.getElementById("t_submit").textContent = d.submit;
+      document.getElementById("t_overall_label").textContent = d.overall;
+      document.getElementById("t_mode_now").textContent = d.modeNow;
+      document.getElementById("t_heat_title").textContent = d.heatTitle;
+      document.getElementById("t_heat_hint").textContent = d.heatHint;
+      document.getElementById("t_radar_title").textContent = d.radarTitle;
+      document.getElementById("t_radar_hint").textContent = d.radarHint;
+      document.getElementById("t_note").textContent = d.note;
+      document.getElementById("t_items_title").textContent = d.itemsTitle;
 
-        type:"radar",
+      // active class
+      ["zh","en","jp","kr"].forEach(k=>{
+        const el = document.getElementById("lang_"+k);
+        if(!el) return;
+        el.classList.toggle("active", k===lang);
+      });
+    }
 
-        data:{
-            labels:data.indicators.map(i=>i.name),
+    function setLang(lang){
+      document.getElementById("langInput").value = lang;
+      applyLang(lang);
+    }
 
-            datasets:[{
+    // ===== Mode inputs visibility (optional) =====
+    const modeSelect = document.getElementById("modeSelect");
+    const healthInputs = document.getElementById("healthInputs");
+    function updateModeUI(){
+      const v = modeSelect.value;
+      // show inputs only for health
+      healthInputs.style.display = (v==="health") ? "block" : "none";
+      document.getElementById("modeNowText").textContent = v;
+    }
+    modeSelect.addEventListener("change", updateModeUI);
 
-                data:values,
+    // ===== Ensure user_id exists (if backend requires it) =====
+    function ensureUserId(){
+      const key="vhds_user_id";
+      let uid = localStorage.getItem(key);
+      if(!uid){
+        uid = "u_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+        localStorage.setItem(key, uid);
+      }
+      document.getElementById("userIdInput").value = uid;
+    }
 
-                borderColor:"#00eaff",
+    // ===== Render indicator list =====
+    function renderItems(list){
+      const box = document.getElementById("itemsList");
+      box.innerHTML = "";
+      list.slice(0,10).forEach(it=>{
+        const div = document.createElement("div");
+        div.className="ind";
+        div.innerHTML = `
+          <div class="indTop">
+            <div class="indName">${escapeHtml(it.name || "")}</div>
+            <div class="scorePill">${Number(it.score ?? 0)}</div>
+          </div>
+          <div class="indDesc">${escapeHtml(it.desc || "")}</div>
+        `;
+        box.appendChild(div);
+      });
+    }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    }
 
-                borderWidth:2,
+    // ===== Radar glow animation (canvas overlay feel) =====
+    let radarChart;
+    function makeRadar(labels, values){
+      const ctx = document.getElementById("radarChart").getContext("2d");
 
-                backgroundColor:gradient,
+      const data = {
+        labels,
+        datasets: [{
+          label: "Score",
+          data: values,
+          fill: true,
+          backgroundColor: "rgba(0,198,255,0.12)",
+          borderColor: "rgba(0,198,255,0.85)",
+          pointBackgroundColor: "rgba(0,198,255,0.95)",
+          pointBorderColor: "rgba(255,255,255,0.65)",
+          pointRadius: 3,
+          borderWidth: 2,
+          tension: 0.2
+        }]
+      };
 
-                pointBackgroundColor:"#00eaff",
-
-                pointRadius:3,
-
-                pointHoverRadius:6
-
-            }]
+      const glowPlugin = {
+        id: "glowPlugin",
+        beforeDatasetsDraw(chart, args, pluginOptions){
+          const {ctx} = chart;
+          ctx.save();
+          ctx.shadowColor = "rgba(0,198,255,0.55)";
+          ctx.shadowBlur = 18;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         },
-
-        options:{
-
-            responsive:false,
-
-            animation:{
-                duration:2000,
-                easing:"easeInOutSine"
-            },
-
-            scales:{
-                r:{
-                    min:0,
-                    max:100,
-
-                    grid:{
-                        color:"rgba(0,234,255,0.15)"
-                    },
-
-                    angleLines:{
-                        color:"rgba(0,234,255,0.2)"
-                    },
-
-                    pointLabels:{
-                        color:"#8fdfff",
-                        font:{size:11}
-                    },
-
-                    ticks:{display:false}
-                }
-            },
-
-            plugins:{
-                legend:{display:false}
-            }
+        afterDatasetsDraw(chart){
+          chart.ctx.restore();
         }
+      };
+
+      if(radarChart) radarChart.destroy();
+
+      radarChart = new Chart(ctx, {
+        type: "radar",
+        data,
+        options: {
+          responsive:true,
+          plugins:{ legend:{display:false} },
+          scales:{
+            r:{
+              angleLines:{color:"rgba(255,255,255,0.10)"},
+              grid:{color:"rgba(255,255,255,0.10)"},
+              pointLabels:{color:"rgba(255,255,255,0.75)",font:{size:11,weight:"700"}},
+              ticks:{display:false},
+              suggestedMin:0,
+              suggestedMax:100
+            }
+          },
+          animation:{
+            duration:900,
+            easing:"easeOutQuart"
+          }
+        },
+        plugins:[glowPlugin]
+      });
+
+      // subtle breathing animation by updating dataset alpha
+      let t=0;
+      function pulse(){
+        t += 0.03;
+        const a = 0.10 + (Math.sin(t)*0.04 + 0.04); // ~0.10..0.18
+        radarChart.data.datasets[0].backgroundColor = `rgba(0,198,255,${a.toFixed(3)})`;
+        radarChart.update("none");
+        requestAnimationFrame(pulse);
+      }
+      requestAnimationFrame(pulse);
+    }
+
+    // ===== Human canvas glow + breathing heat zones =====
+    function drawHumanBase(ctx,w,h){
+      ctx.clearRect(0,0,w,h);
+
+      // background haze
+      const bg = ctx.createRadialGradient(w*0.5,h*0.25,20,w*0.5,h*0.35,Math.max(w,h)*0.8);
+      bg.addColorStop(0,"rgba(0,198,255,0.10)");
+      bg.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,w,h);
+
+      // body silhouette (simple)
+      ctx.save();
+      ctx.translate(w*0.5,h*0.55);
+
+      const scale = Math.min(w/600, h/800) * 1.0;
+
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = 0.85;
+
+      // glow outline
+      ctx.strokeStyle="rgba(0,198,255,0.18)";
+      ctx.lineWidth=10;
+      ctx.shadowColor="rgba(0,170,255,0.35)";
+      ctx.shadowBlur=18;
+
+      ctx.beginPath();
+      // head
+      ctx.arc(0,-230,55,0,Math.PI*2);
+      // torso
+      ctx.moveTo(-80,-170);
+      ctx.quadraticCurveTo(-120,-40,-90,60);
+      ctx.quadraticCurveTo(-60,170,-45,260);
+      ctx.quadraticCurveTo(0,290,45,260);
+      ctx.quadraticCurveTo(60,170,90,60);
+      ctx.quadraticCurveTo(120,-40,80,-170);
+      ctx.closePath();
+      ctx.stroke();
+
+      // fill
+      ctx.shadowBlur=0;
+      ctx.fillStyle="rgba(255,255,255,0.04)";
+      ctx.fill();
+
+      // arms
+      ctx.strokeStyle="rgba(255,255,255,0.06)";
+      ctx.lineWidth=22;
+      ctx.lineCap="round";
+      ctx.beginPath();
+      ctx.moveTo(-85,-135); ctx.lineTo(-165,-20); ctx.lineTo(-150,120);
+      ctx.moveTo(85,-135);  ctx.lineTo(165,-20);  ctx.lineTo(150,120);
+      ctx.stroke();
+
+      // legs
+      ctx.lineWidth=26;
+      ctx.beginPath();
+      ctx.moveTo(-40,260); ctx.lineTo(-70,420);
+      ctx.moveTo(40,260);  ctx.lineTo(70,420);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function heatColor(score){
+      // 0..100 -> blue->cyan->yellow->red
+      const s = Math.max(0, Math.min(100, Number(score)||0));
+      if(s < 50){
+        // blue to cyan
+        const t = s/50;
+        return {r:Math.round(0), g:Math.round(150 + t*80), b:Math.round(255), a:1};
+      }else{
+        const t = (s-50)/50;
+        // cyan/yellow to red
+        return {r:Math.round(255), g:Math.round(230 - t*160), b:Math.round(80 - t*80), a:1};
+      }
+    }
+
+    function drawGlowSpot(ctx, x, y, radius, score, pulseK){
+      const c = heatColor(score);
+      const a1 = 0.25 + 0.20*(score/100) + 0.08*pulseK;
+      const a2 = 0.00;
+
+      const g = ctx.createRadialGradient(x,y,0,x,y,radius*(1.15 + 0.25*pulseK));
+      g.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${a1})`);
+      g.addColorStop(0.35, `rgba(${c.r},${c.g},${c.b},${(a1*0.7).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${c.r},${c.g},${c.b},${a2})`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x,y,radius*(1.05 + 0.15*pulseK),0,Math.PI*2);
+      ctx.fill();
+    }
+
+    function renderHumanHeat(scores){
+      const canvas = document.getElementById("humanCanvas");
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width, h = canvas.height;
+
+      // positions in canvas coords
+      const P = {
+        z_head: [w*0.50, h*0.18, 80],
+        z_face: [w*0.50, h*0.27, 70],
+        z_chest:[w*0.50, h*0.39, 90],
+        z_upper_abd:[w*0.50, h*0.50, 95],
+        z_lower_abd:[w*0.50, h*0.60, 95],
+        z_pelvis:[w*0.50, h*0.69, 90],
+        z_arm_l:[w*0.30, h*0.50, 85],
+        z_arm_r:[w*0.70, h*0.50, 85],
+        z_leg_l:[w*0.44, h*0.86, 100],
+        z_leg_r:[w*0.56, h*0.86, 100],
+      };
+
+      let t=0;
+      function loop(){
+        t += 0.028;
+        const pulseK = (Math.sin(t)+1)/2; // 0..1
+
+        drawHumanBase(ctx,w,h);
+
+        // add glow spots
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        Object.keys(P).forEach(k=>{
+          const [x,y,r] = P[k];
+          const sc = (scores && scores[k] != null) ? scores[k] : 50;
+          drawGlowSpot(ctx, x, y, r, sc, pulseK);
+        });
+        ctx.restore();
+
+        // soft vignette
+        const vg = ctx.createRadialGradient(w*0.5,h*0.55, w*0.15, w*0.5,h*0.55, w*0.75);
+        vg.addColorStop(0,"rgba(0,0,0,0)");
+        vg.addColorStop(1,"rgba(0,0,0,0.55)");
+        ctx.fillStyle = vg;
+        ctx.fillRect(0,0,w,h);
+
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // ===== Boot =====
+    document.addEventListener("DOMContentLoaded", ()=>{
+      ensureUserId();
+
+      // init lang from backend if any
+      const initLang = (typeof LANG === "string" && LANG) ? LANG : "zh";
+      document.getElementById("langInput").value = initLang;
+      applyLang(initLang);
+
+      // init mode
+      if(typeof MODE === "string" && MODE){
+        modeSelect.value = MODE;
+      }
+      updateModeUI();
+
+      // data fallback
+      const heat = (HEAT_SCORES && Object.keys(HEAT_SCORES).length) ? HEAT_SCORES : demoHeat();
+      const radar = (RADAR_LABELS && RADAR_LABELS.length && RADAR_VALUES && RADAR_VALUES.length)
+        ? {labels:RADAR_LABELS, values:RADAR_VALUES}
+        : demoRadar();
+      const items = (ITEMS && ITEMS.length) ? ITEMS : demoItems();
+
+      // overall display fallback
+      const overallEl = document.getElementById("overallScoreText");
+      if(!overallEl.textContent || Number(overallEl.textContent)===0){
+        const avg = Math.round(items.reduce((a,x)=>a+(Number(x.score)||0),0)/Math.max(1,items.length));
+        overallEl.textContent = String(avg);
+      }
+
+      // render
+      renderHumanHeat(heat);
+      makeRadar(radar.labels, radar.values);
+      renderItems(items);
     });
-
-    animateRadarGlow();
-
-}
-
-/* 呼吸動畫 */
-
-function animateRadarGlow(){
-
-    let intensity=0;
-
-    let direction=1;
-
-    setInterval(()=>{
-
-        intensity+=direction*0.02;
-
-        if(intensity>1) direction=-1;
-
-        if(intensity<0) direction=1;
-
-        const canvas=document.getElementById("radarChart");
-
-        canvas.style.filter=
-        `drop-shadow(0 0 ${20+intensity*25}px rgba(0,234,255,0.8))`;
-
-    },50);
-
-}
-
-/* 人體熱區 */
-
-function showHeatmap(data){
-
-    const canvas=document.getElementById("heatmapCanvas");
-
-    const ctx=canvas.getContext("2d");
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    ctx.fillStyle="rgba(255,255,255,0.1)";
-
-    ctx.fillRect(100,50,50,200);
-
-    data.indicators.forEach((i,index)=>{
-
-        const intensity=i.score/100;
-
-        ctx.beginPath();
-
-        ctx.arc(125,80+index*25,10,0,2*Math.PI);
-
-        ctx.fillStyle=`rgba(255,80,80,${intensity})`;
-
-        ctx.fill();
-
-    });
-
-}
-
-</script>
-
+  </script>
 </body>
-
 </html>
+                  
