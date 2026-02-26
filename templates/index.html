@@ -18,13 +18,18 @@
     .mode{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .mode button{padding:12px;border-radius:12px;border:1px solid #2a3a60;background:#0e1627;color:#e8eefc;font-weight:700}
     .mode button.active{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.25) inset}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1627;border:1px solid #2a3a60;font-weight:700}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>VHDS 測試版（網頁連結）</h1>
-      <div class="muted">上傳照片→選擇分析→（依選項填資料）→立即生成：雷達圖＋10指標量化報告。</div>
+      <div class="muted">上傳照片→選擇分析→（依選項填資料）→生成：雷達圖＋10指標＋熱區＋歷史比較。</div>
+      <div class="muted" style="margin-top:8px;">
+        <span class="pill" id="uidpill">UserID: -</span>
+        <a class="pill" id="historyLink" href="#" style="text-decoration:none;color:#e8eefc;">查看我的歷史</a>
+      </div>
     </div>
 
     {% if error %}
@@ -32,6 +37,8 @@
     {% endif %}
 
     <form class="card" method="post" action="/analyze" enctype="multipart/form-data" id="form">
+      <input type="hidden" name="user_id" id="user_id" value="">
+
       <label>上傳照片（建議：自然光、無濾鏡）</label>
       <input type="file" name="photo" accept="image/*" capture="environment" />
 
@@ -44,17 +51,18 @@
       </div>
       <input type="hidden" name="mode" id="mode" value="1" />
 
+      <!-- 共用欄位：只保留一份，避免name重複 -->
       <div id="fields" style="margin-top:10px;">
-        <!-- 健康管理（1） -->
-        <div class="block" data-show="1">
+
+        <div id="f_health">
           <div class="row">
             <div>
-              <label>年齡</label>
-              <input name="age" inputmode="numeric" placeholder="例如：35" />
+              <label>年齡（健康管理必填）</label>
+              <input name="age" id="age" inputmode="numeric" placeholder="例如：35" />
             </div>
             <div>
-              <label>性別</label>
-              <select name="sex">
+              <label>性別（必填）</label>
+              <select name="sex" id="sex">
                 <option value="">請選擇</option>
                 <option value="1">男</option>
                 <option value="2">女</option>
@@ -64,57 +72,28 @@
           <div class="row">
             <div>
               <label>身高（cm）</label>
-              <input name="height" inputmode="numeric" placeholder="例如：172" />
+              <input name="height" id="height" inputmode="numeric" placeholder="例如：172" />
             </div>
             <div>
               <label>體重（kg）</label>
-              <input name="weight" inputmode="numeric" placeholder="例如：68" />
+              <input name="weight" id="weight" inputmode="numeric" placeholder="例如：68" />
             </div>
           </div>
         </div>
 
-        <!-- 肌膚管理（2） -->
-        <div class="block" data-show="2" style="display:none;">
-          <div class="muted">肌膚管理不需額外輸入，直接生成10項肌膚指標。</div>
+        <div id="f_skin" style="display:none;">
+          <div class="muted">肌膚管理：不需額外輸入，直接生成10項肌膚指標。</div>
         </div>
 
-        <!-- 面相運勢（3）：先年齡後性別（這裡用同頁呈現；LINE你再做逐步問答） -->
-        <div class="block" data-show="3" style="display:none;">
-          <div class="row">
-            <div>
-              <label>年齡</label>
-              <input name="age" inputmode="numeric" placeholder="例如：35" />
-            </div>
-            <div>
-              <label>性別</label>
-              <select name="sex">
-                <option value="">請選擇</option>
-                <option value="1">男</option>
-                <option value="2">女</option>
-              </select>
-            </div>
-          </div>
+        <div id="f_fortune" style="display:none;">
+          <div class="muted">面相運勢：需填年齡、性別。</div>
         </div>
 
-        <!-- 人際心理（4） -->
-        <div class="block" data-show="4" style="display:none;">
-          <div class="row">
-            <div>
-              <label>年齡</label>
-              <input name="age" inputmode="numeric" placeholder="例如：35" />
-            </div>
-            <div>
-              <label>性別</label>
-              <select name="sex">
-                <option value="">請選擇</option>
-                <option value="1">男</option>
-                <option value="2">女</option>
-              </select>
-            </div>
-          </div>
+        <div id="f_social" style="display:none;">
+          <div class="muted">人際心理：需填年齡、性別、職業、外向程度。</div>
 
           <label>職業類型</label>
-          <select name="job">
+          <select name="job" id="job">
             <option value="">請選擇</option>
             <option value="上班族">上班族</option>
             <option value="管理者">管理者</option>
@@ -124,7 +103,7 @@
           </select>
 
           <label>外向程度（1–5）</label>
-          <select name="extro">
+          <select name="extro" id="extro">
             <option value="">請選擇</option>
             <option value="1">1 非常內向</option>
             <option value="2">2 偏內向</option>
@@ -133,6 +112,7 @@
             <option value="5">5 非常外向</option>
           </select>
         </div>
+
       </div>
 
       <button class="btn" type="submit">生成報告</button>
@@ -141,18 +121,44 @@
   </div>
 
 <script>
+  // 1) 產生/取得 user_id（同一支手機可追蹤歷史）
+  function uuid(){
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+      const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
+      return v.toString(16);
+    });
+  }
+  let uid = localStorage.getItem("vhds_uid");
+  if(!uid){ uid = uuid(); localStorage.setItem("vhds_uid", uid); }
+  document.getElementById("user_id").value = uid;
+  document.getElementById("uidpill").textContent = "UserID: " + uid.slice(0,8) + "…";
+  document.getElementById("historyLink").href = "/history?uid=" + encodeURIComponent(uid);
+
+  // 2) 模式切換
   const modeInput = document.getElementById("mode");
   const buttons = document.querySelectorAll(".mode button");
-  const blocks = document.querySelectorAll(".block");
+
+  const fHealth = document.getElementById("f_health");
+  const fSkin = document.getElementById("f_skin");
+  const fFortune = document.getElementById("f_fortune");
+  const fSocial = document.getElementById("f_social");
+
+  function show(block){
+    fHealth.style.display = "none";
+    fSkin.style.display = "none";
+    fFortune.style.display = "none";
+    fSocial.style.display = "none";
+    block.style.display = "";
+  }
 
   function setMode(m){
     modeInput.value = m;
     buttons.forEach(b => b.classList.toggle("active", b.dataset.mode === m));
-    blocks.forEach(bl => {
-      bl.style.display = (bl.dataset.show === m) ? "" : "none";
-    });
+    if(m==="1") show(fHealth);
+    if(m==="2") show(fSkin);
+    if(m==="3") show(fFortune);
+    if(m==="4") show(fSocial);
   }
-
   buttons.forEach(b => b.addEventListener("click", ()=>setMode(b.dataset.mode)));
 </script>
 </body>
