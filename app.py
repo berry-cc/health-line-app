@@ -21,7 +21,7 @@ heat_scores = {
   "z_leg_r": 66
 }
 
-return render_template("index.html", result=result, heat_scores=heat_scores)
+    return render_template("index.html", result=result, heat_scores=heat_scores)
 # --------------------
 # 基本設定
 # --------------------
