@@ -29,10 +29,7 @@ def home():
 # --------------------
 # 基本設定
 # --------------------
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
-MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # 圖片壓縮：越小越快越省
 MAX_SIDE = 768
