@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>VHDS Health 自我健康管理</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 
 body{
     background:#0b0f14;
-    color:#e8f1ff;
+    color:white;
     font-family:-apple-system,BlinkMacSystemFont;
     text-align:center;
 }
@@ -21,77 +24,41 @@ body{
     padding:20px;
 }
 
-.title{
-    font-size:26px;
-    margin-bottom:20px;
-}
+button{
 
-/* 語言按鈕 */
+    background:linear-gradient(45deg,#00eaff,#0078ff);
 
-.lang-btn{
-    padding:8px 14px;
-    margin:4px;
-    border-radius:8px;
-    border:1px solid #00eaff;
-    background:transparent;
-    color:#00eaff;
-    cursor:pointer;
-}
-
-.lang-btn:hover{
-    background:#00eaff;
-    color:#000;
-}
-
-/* 模式按鈕 */
-
-.mode-btn{
-    width:100%;
-    padding:14px;
-    margin:6px;
-    border-radius:12px;
     border:none;
-    background:linear-gradient(90deg,#00eaff,#0066ff);
+
+    padding:12px;
+
+    margin:5px;
+
     color:white;
-    font-size:16px;
+
+    border-radius:10px;
+
+    font-size:14px;
+
     cursor:pointer;
+
+    box-shadow:0 0 15px rgba(0,234,255,0.4);
 }
 
-.mode-btn:hover{
-    opacity:0.8;
-}
-
-/* 上傳 */
-
-.upload-box{
+canvas{
     margin-top:20px;
 }
-
-/* canvas */
 
 #heatmapCanvas{
-    margin-top:20px;
-    background:transparent;
-}
 
-/* 雷達圖 */
+    filter: drop-shadow(0 0 20px rgba(255,80,80,0.7));
+
+}
 
 #radarChart{
-    margin-top:20px;
-}
 
-/* 報告 */
+    filter: drop-shadow(0 0 20px rgba(0,234,255,0.7));
 
-.report{
-    text-align:left;
-    margin-top:20px;
-    background:#111826;
-    padding:15px;
-    border-radius:10px;
-}
-
-.score{
-    color:#00eaff;
 }
 
 </style>
@@ -102,170 +69,230 @@ body{
 
 <div class="container">
 
-<div class="title">
-VHDS Health 自我健康管理
-</div>
-
-<!-- 語言選擇 -->
-
-<div>
-
-<button class="lang-btn" onclick="setLang('zh')">中文</button>
-<button class="lang-btn" onclick="setLang('en')">English</button>
-<button class="lang-btn" onclick="setLang('ja')">日本語</button>
-<button class="lang-btn" onclick="setLang('ko')">한국어</button>
-
-</div>
-
-
-<!-- 模式選擇 -->
-
-<div>
-
-<button class="mode-btn" onclick="setMode(1)">
-健康管理
-</button>
-
-<button class="mode-btn" onclick="setMode(2)">
-肌膚管理
-</button>
-
-<button class="mode-btn" onclick="setMode(3)">
-面相學分析
-</button>
-
-<button class="mode-btn" onclick="setMode(4)">
-心理學分析
-</button>
-
-</div>
-
-
-<!-- 上傳照片 -->
-
-<div class="upload-box">
+<h2>VHDS Health 自我健康管理</h2>
 
 <input type="file" id="photo">
 
-<button class="mode-btn" onclick="analyze()">
-開始分析
-</button>
+<br><br>
 
-</div>
+<button onclick="startAnalysis()">開始分析</button>
 
+<br><br>
 
-<!-- 人體熱區圖 -->
+<!-- 語言按鈕 -->
 
-<canvas id="heatmapCanvas" width="320" height="600"></canvas>
+<button onclick="setLang('zh')">中文</button>
+<button onclick="setLang('en')">English</button>
+<button onclick="setLang('jp')">日本語</button>
+<button onclick="setLang('kr')">한국어</button>
 
+<br><br>
+
+<!-- 人體熱區 -->
+
+<canvas id="heatmapCanvas" width="250" height="400"></canvas>
 
 <!-- 雷達圖 -->
 
 <canvas id="radarChart" width="320" height="320"></canvas>
 
-
-<!-- 報告 -->
-
-<div id="report" class="report"></div>
+<div id="result"></div>
 
 </div>
-
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/heatmap.js"></script>
-
 
 <script>
 
 let currentLang="zh";
-let currentMode=1;
-
 
 function setLang(lang){
     currentLang=lang;
 }
 
-function setMode(mode){
-    currentMode=mode;
-}
-
-
-async function analyze(){
+async function startAnalysis(){
 
     const file=document.getElementById("photo").files[0];
 
-    if(!file){
-        alert("請上傳照片");
-        return;
-    }
-
     const formData=new FormData();
+
     formData.append("photo",file);
-    formData.append("mode",currentMode);
+
+    formData.append("mode","health");
+
     formData.append("lang",currentLang);
 
-    const res=await fetch("/analyze",{
-        method:"POST",
-        body:formData
-    });
+    const res=await fetch("/analyze",{method:"POST",body:formData});
 
     const data=await res.json();
 
-    showReport(data);
     showRadar(data);
-    drawHeatmap(data.heatmap);
+
+    showHeatmap(data);
+
+    showText(data);
 
 }
 
-
-function showReport(data){
+function showText(data){
 
     let html="";
 
-    data.indicators.forEach(item=>{
+    data.indicators.forEach(i=>{
 
-        html+=`
-        <div>
-        <b>${item.name}</b><br>
-        <span class="score">${item.score}</span><br>
-        ${item.desc}
-        <hr>
-        </div>
-        `;
+        html+=`<p>${i.name} ${i.score}/100<br>${i.desc}</p>`;
+
     });
 
-    document.getElementById("report").innerHTML=html;
+    document.getElementById("result").innerHTML=html;
+
 }
 
+/* 雷達圖發光版本 */
+
+let radarChart=null;
 
 function showRadar(data){
 
-    const ctx=document.getElementById("radarChart");
+    const ctx=document.getElementById("radarChart").getContext("2d");
 
-    new Chart(ctx,{
-        type:'radar',
+    const values=data.indicators.map(i=>i.score);
+
+    const gradient=ctx.createRadialGradient(
+        160,160,20,
+        160,160,160
+    );
+
+    gradient.addColorStop(0,"rgba(0,234,255,0.9)");
+    gradient.addColorStop(0.5,"rgba(0,150,255,0.4)");
+    gradient.addColorStop(1,"rgba(0,0,0,0)");
+
+    if(radarChart){
+        radarChart.destroy();
+    }
+
+    radarChart=new Chart(ctx,{
+
+        type:"radar",
+
         data:{
             labels:data.indicators.map(i=>i.name),
+
             datasets:[{
-                data:data.indicators.map(i=>i.score),
+
+                data:values,
+
                 borderColor:"#00eaff",
-                backgroundColor:"rgba(0,234,255,0.2)"
+
+                borderWidth:2,
+
+                backgroundColor:gradient,
+
+                pointBackgroundColor:"#00eaff",
+
+                pointRadius:3,
+
+                pointHoverRadius:6
+
             }]
         },
+
         options:{
+
+            responsive:false,
+
+            animation:{
+                duration:2000,
+                easing:"easeInOutSine"
+            },
+
             scales:{
                 r:{
                     min:0,
-                    max:100
+                    max:100,
+
+                    grid:{
+                        color:"rgba(0,234,255,0.15)"
+                    },
+
+                    angleLines:{
+                        color:"rgba(0,234,255,0.2)"
+                    },
+
+                    pointLabels:{
+                        color:"#8fdfff",
+                        font:{size:11}
+                    },
+
+                    ticks:{display:false}
                 }
+            },
+
+            plugins:{
+                legend:{display:false}
             }
         }
+    });
+
+    animateRadarGlow();
+
+}
+
+/* 呼吸動畫 */
+
+function animateRadarGlow(){
+
+    let intensity=0;
+
+    let direction=1;
+
+    setInterval(()=>{
+
+        intensity+=direction*0.02;
+
+        if(intensity>1) direction=-1;
+
+        if(intensity<0) direction=1;
+
+        const canvas=document.getElementById("radarChart");
+
+        canvas.style.filter=
+        `drop-shadow(0 0 ${20+intensity*25}px rgba(0,234,255,0.8))`;
+
+    },50);
+
+}
+
+/* 人體熱區 */
+
+function showHeatmap(data){
+
+    const canvas=document.getElementById("heatmapCanvas");
+
+    const ctx=canvas.getContext("2d");
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="rgba(255,255,255,0.1)";
+
+    ctx.fillRect(100,50,50,200);
+
+    data.indicators.forEach((i,index)=>{
+
+        const intensity=i.score/100;
+
+        ctx.beginPath();
+
+        ctx.arc(125,80+index*25,10,0,2*Math.PI);
+
+        ctx.fillStyle=`rgba(255,80,80,${intensity})`;
+
+        ctx.fill();
+
     });
 
 }
 
 </script>
 
-
 </body>
+
 </html>
