@@ -1,1 +1,151 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ title }}</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;margin:0;background:#0b0f1a;color:#e8eefc}
+    .wrap{max-width:860px;margin:0 auto;padding:22px}
+    .card{background:#121a2b;border:1px solid #1f2a44;border-radius:14px;padding:18px;margin:14px 0}
+    h1{margin:6px 0 6px;font-size:22px}
+    .muted{opacity:.85;font-size:14px;line-height:1.4}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1627;border:1px solid #2a3a60;font-weight:700}
+    .list{margin:0;padding:0;list-style:none}
+    .item{padding:12px;border:1px solid #1f2a44;background:#0e1627;border-radius:12px;margin:10px 0}
+    .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .name{font-weight:800}
+    .desc{opacity:.9;margin-top:6px;font-size:14px}
+    .badge{padding:4px 10px;border-radius:999px;border:1px solid #2a3a60;background:#121a2b;font-weight:800}
+    .btn{display:inline-block;margin-top:10px;padding:12px 14px;border-radius:12px;background:#3b82f6;color:#fff;text-decoration:none;font-weight:800}
+    svg{width:100%;height:auto}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .lg{display:flex;align-items:center;gap:8px;font-size:13px;opacity:.9}
+    .box{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.15)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>{{ title }}</h1>
+      <div class="muted">
+        綜合分數：<span class="pill">{{ overall }} / 100</span>　
+        <span class="pill">{{ note }}</span>
+      </div>
+      <div class="muted" style="margin-top:8px;">{{ photo_hint }}</div>
+      <a class="btn" href="/">返回重新分析</a>
+    </div>
 
+    <div class="grid">
+      <div class="card">
+        <div class="row">
+          <div class="name">雷達圖（10指標）</div>
+          <div class="muted">不生成圖片，瀏覽器繪製</div>
+        </div>
+        <canvas id="radar" height="360"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div class="name">人體熱區圖（簡版）</div>
+          <div class="muted">示意用，非診斷</div>
+        </div>
+
+        <!-- 簡單人體SVG，色塊由後端給 -->
+        <svg viewBox="0 0 220 520" role="img" aria-label="body heatmap">
+          <!-- head -->
+          <circle cx="110" cy="60" r="38" fill="{{ heat.head }}" opacity="0.9"/>
+          <!-- chest -->
+          <rect x="62" y="110" width="96" height="110" rx="18" fill="{{ heat.chest }}" opacity="0.9"/>
+          <!-- belly -->
+          <rect x="62" y="225" width="96" height="95" rx="18" fill="{{ heat.belly }}" opacity="0.9"/>
+          <!-- pelvis -->
+          <rect x="70" y="325" width="80" height="65" rx="18" fill="{{ heat.pelvis }}" opacity="0.9"/>
+          <!-- arms -->
+          <rect x="15" y="125" width="40" height="185" rx="18" fill="{{ heat.arms }}" opacity="0.9"/>
+          <rect x="165" y="125" width="40" height="185" rx="18" fill="{{ heat.arms }}" opacity="0.9"/>
+          <!-- legs -->
+          <rect x="70" y="395" width="40" height="110" rx="18" fill="{{ heat.legs }}" opacity="0.9"/>
+          <rect x="110" y="395" width="40" height="110" rx="18" fill="{{ heat.legs }}" opacity="0.9"/>
+
+          <!-- outline -->
+          <circle cx="110" cy="60" r="38" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="62" y="110" width="96" height="110" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="62" y="225" width="96" height="95" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="70" y="325" width="80" height="65" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="15" y="125" width="40" height="185" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="165" y="125" width="40" height="185" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="70" y="395" width="40" height="110" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+          <rect x="110" y="395" width="40" height="110" rx="18" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+        </svg>
+
+        <div class="legend">
+          <div class="lg"><span class="box" style="background:#22c55e"></span>佳</div>
+          <div class="lg"><span class="box" style="background:#f59e0b"></span>中</div>
+          <div class="lg"><span class="box" style="background:#f97316"></span>偏弱</div>
+          <div class="lg"><span class="box" style="background:#ef4444"></span>需注意</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="name">10項指標明細</div>
+        <div class="muted">每項：分數＋等級＋30字內說明</div>
+      </div>
+
+      <ul class="list">
+        {% for it in items %}
+          <li class="item">
+            <div class="row">
+              <div class="name">{{ loop.index }}. {{ it.name }}</div>
+              <div class="badge">{{ it.score }} / 100（{{ it.grade }}）</div>
+            </div>
+            <div class="desc">{{ it.desc }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div class="muted" style="margin-top:10px;">
+        本結果為測試版趨勢參考，非醫療診斷。若要更準確，建議補充全身照與完整資料。
+      </div>
+    </div>
+  </div>
+
+<script>
+  const labels = {{ labels|safe }};
+  const scores = {{ scores|safe }};
+
+  const ctx = document.getElementById("radar");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Score",
+        data: scores,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { stepSize: 20, showLabelBackdrop: false }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+</script>
+</body>
+</html>
