@@ -1,1 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VHDS 歷史紀錄</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;margin:0;background:#0b0f1a;color:#e8eefc}
+    .wrap{max-width:900px;margin:0 auto;padding:22px}
+    .card{background:#121a2b;border:1px solid #1f2a44;border-radius:14px;padding:18px;margin:14px 0}
+    h1{margin:6px 0 12px;font-size:22px}
+    .muted{opacity:.85;font-size:14px;line-height:1.4}
+    .item{padding:12px;border:1px solid #1f2a44;background:#0e1627;border-radius:12px;margin:10px 0}
+    .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1627;border:1px solid #2a3a60;font-weight:700}
+    a{color:#93c5fd;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>我的歷史紀錄</h1>
+      <div class="muted">UserID：{{ user_id[:8] }}…（同一支手機自動追蹤）</div>
+      <div style="margin-top:10px;">
+        <a class="pill" href="/">返回首頁</a>
+      </div>
+    </div>
 
+    <div class="card">
+      {% if records|length == 0 %}
+        <div class="muted">尚無紀錄。</div>
+      {% endif %}
+
+      {% for r in records %}
+        <div class="item">
+          <div class="row">
+            <div>
+              <div style="font-weight:800;">
+                {% if r.mode_key == "health" %}健康管理
+                {% elif r.mode_key == "skin" %}肌膚管理
+                {% elif r.mode_key == "fortune" %}面相運勢
+                {% else %}人際心理
+                {% endif %}
+              </div>
+              <div class="muted">{{ r.created_at }}</div>
+            </div>
+            <div class="pill">總分 {{ r.overall }}/100</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
