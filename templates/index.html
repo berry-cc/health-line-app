@@ -3,163 +3,259 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VHDS 測試版</title>
+  <title>VHDS｜健康管理測試版</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;margin:0;background:#0b0f1a;color:#e8eefc}
-    .wrap{max-width:760px;margin:0 auto;padding:22px}
-    .card{background:#121a2b;border:1px solid #1f2a44;border-radius:14px;padding:18px;margin:14px 0}
-    h1{margin:6px 0 12px;font-size:22px}
-    .muted{opacity:.85;font-size:14px;line-height:1.4}
-    label{display:block;margin:10px 0 6px;font-size:14px;opacity:.9}
-    input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #2a3a60;background:#0e1627;color:#e8eefc}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .btn{width:100%;padding:13px;border-radius:12px;border:0;background:#3b82f6;color:#fff;font-weight:700;margin-top:14px}
-    .err{background:#3b1a1a;border:1px solid #7f1d1d;color:#fecaca;padding:12px;border-radius:12px}
-    .mode{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .mode button{padding:12px;border-radius:12px;border:1px solid #2a3a60;background:#0e1627;color:#e8eefc;font-weight:700}
-    .mode button.active{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.25) inset}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0e1627;border:1px solid #2a3a60;font-weight:700}
+    :root{
+      --bg:#0b0f14;
+      --card:#111826;
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --line:#1f2937;
+      --btn:#2563eb;
+      --btn2:#0ea5e9;
+      --danger:#ef4444;
+      --ok:#22c55e;
+    }
+    body{
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, #0f1a2a 0%, var(--bg) 50%, #070a0e 100%);
+      color:var(--text);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px;}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 12px;border:1px solid var(--line);border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .brand{display:flex;flex-direction:column;gap:4px}
+    .brand h1{margin:0;font-size:18px;letter-spacing:.5px}
+    .brand p{margin:0;color:var(--muted);font-size:12px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;margin-top:14px;
+    }
+    @media (max-width: 900px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background: rgba(17,24,38,.85);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .card h2{margin:0 0 10px;font-size:15px}
+    .sub{color:var(--muted);font-size:12px;margin:0 0 12px;line-height:1.5}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input, select, textarea{
+      width:100%;
+      box-sizing:border-box;
+      background:#0b1220;
+      border:1px solid #233049;
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:12px;
+      outline:none;
+      font-size:14px;
+    }
+    input:focus, select:focus, textarea:focus{border-color:#3b82f6}
+    textarea{min-height:72px;resize:vertical}
+    .col{flex:1;min-width:140px}
+    .btn{
+      background: linear-gradient(180deg, #3b82f6, var(--btn));
+      border:none;color:white;
+      padding:11px 14px;border-radius:12px;
+      cursor:pointer;font-weight:700;
+      width:100%;
+      margin-top:10px;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn2{
+      background: linear-gradient(180deg, #22d3ee, var(--btn2));
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid #253552;background:#0b1220;color:var(--muted);
+      font-size:12px;
+    }
+    .warn{color:#fbbf24}
+    .ok{color:var(--ok)}
+    .danger{color:var(--danger)}
+    .divider{height:1px;background:var(--line);margin:12px 0}
+    .resultBox{
+      white-space:pre-wrap;
+      line-height:1.6;
+      font-size:14px;
+      background:#0b1220;
+      border:1px solid #233049;
+      padding:12px;
+      border-radius:14px;
+    }
+    .heatmap-card h3{margin:0 0 8px;font-size:14px}
+    .legend{color:var(--muted);font-size:12px}
+    .small{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <h1>VHDS 測試版（網頁連結）</h1>
-      <div class="muted">上傳照片→選擇分析→（依選項填資料）→生成：雷達圖＋10指標＋熱區＋歷史比較。</div>
-      <div class="muted" style="margin-top:8px;">
-        <span class="pill" id="uidpill">UserID: -</span>
-        <a class="pill" id="historyLink" href="#" style="text-decoration:none;color:#e8eefc;">查看我的歷史</a>
+    <div class="top">
+      <div class="brand">
+        <h1>VHDS｜自我健康管理測試版</h1>
+        <p>上傳照片 → 選擇分析 → 輸入必要資料 → 生成量化報告（非醫療診斷）</p>
+      </div>
+      <div class="pill">
+        <span class="ok">●</span>
+        <span>Service Online</span>
       </div>
     </div>
 
-    {% if error %}
-      <div class="err">{{ error }}</div>
-    {% endif %}
+    <div class="grid">
 
-    <form class="card" method="post" action="/analyze" enctype="multipart/form-data" id="form">
-      <input type="hidden" name="user_id" id="user_id" value="">
+      <!-- 左：輸入 -->
+      <div class="card">
+        <h2>上傳照片與選擇分析</h2>
+        <p class="sub">若你只上傳正面照，我們會以可取得資訊做分析，並提示你補全身照可提高準確度。</p>
 
-      <label>上傳照片（建議：自然光、無濾鏡）</label>
-      <input type="file" name="photo" accept="image/*" capture="environment" />
-
-      <label style="margin-top:14px;">選擇分析類型</label>
-      <div class="mode">
-        <button type="button" data-mode="1" class="active">1. 健康管理</button>
-        <button type="button" data-mode="2">2. 肌膚管理</button>
-        <button type="button" data-mode="3">3. 面相運勢</button>
-        <button type="button" data-mode="4">4. 人際心理</button>
-      </div>
-      <input type="hidden" name="mode" id="mode" value="1" />
-
-      <!-- 共用欄位：只保留一份，避免name重複 -->
-      <div id="fields" style="margin-top:10px;">
-
-        <div id="f_health">
+        <form method="POST" action="/analyze" enctype="multipart/form-data" id="mainForm">
           <div class="row">
-            <div>
-              <label>年齡（健康管理必填）</label>
-              <input name="age" id="age" inputmode="numeric" placeholder="例如：35" />
+            <div class="col">
+              <label>上傳照片（建議：光線充足）</label>
+              <input type="file" name="photo" accept="image/*" capture="environment" required />
+              <div class="small">手機可直接拍照上傳</div>
             </div>
-            <div>
-              <label>性別（必填）</label>
-              <select name="sex" id="sex">
-                <option value="">請選擇</option>
-                <option value="1">男</option>
-                <option value="2">女</option>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <div class="col">
+              <label>選擇分析項目</label>
+              <select name="mode" id="modeSelect" required>
+                <option value="health" selected>1. 健康管理（需要身高/體重/年齡）</option>
+                <option value="skin">2. 肌膚管理（尚未開發）</option>
+                <option value="face">3. 面相學分析（尚未開發）</option>
+                <option value="psy">4. 心理學分析（尚未開發）</option>
               </select>
             </div>
           </div>
-          <div class="row">
-            <div>
-              <label>身高（cm）</label>
-              <input name="height" id="height" inputmode="numeric" placeholder="例如：172" />
+
+          <!-- 只在健康管理顯示 -->
+          <div id="healthInputs" style="margin-top:12px;">
+            <div class="row">
+              <div class="col">
+                <label>年齡（歲）</label>
+                <input type="number" name="age" min="1" max="120" placeholder="例如：50" />
+              </div>
+              <div class="col">
+                <label>身高（cm）</label>
+                <input type="number" name="height" min="80" max="230" placeholder="例如：170" />
+              </div>
+              <div class="col">
+                <label>體重（kg）</label>
+                <input type="number" name="weight" min="20" max="300" placeholder="例如：70" />
+              </div>
             </div>
-            <div>
-              <label>體重（kg）</label>
-              <input name="weight" id="weight" inputmode="numeric" placeholder="例如：68" />
+            <div class="small warn" style="margin-top:8px;">
+              ※ 健康管理會生成「10 大指標」報告，每項最多 80 字。
             </div>
           </div>
+
+          <div id="notReady" style="display:none;margin-top:12px;">
+            <div class="pill"><span class="warn">●</span><span>此功能尚未開發，先敬請期待。</span></div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label>補充說明（可選）</label>
+            <textarea name="note" placeholder="例如：最近很疲勞、睡眠差、久坐、運動頻率…"></textarea>
+          </div>
+
+          <button class="btn btn2" type="submit">開始分析</button>
+        </form>
+
+        <div class="divider"></div>
+        <div class="small">
+          <span class="warn">提醒：</span>本系統提供「健康管理參考」資訊，不提供醫療診斷。
         </div>
-
-        <div id="f_skin" style="display:none;">
-          <div class="muted">肌膚管理：不需額外輸入，直接生成10項肌膚指標。</div>
-        </div>
-
-        <div id="f_fortune" style="display:none;">
-          <div class="muted">面相運勢：需填年齡、性別。</div>
-        </div>
-
-        <div id="f_social" style="display:none;">
-          <div class="muted">人際心理：需填年齡、性別、職業、外向程度。</div>
-
-          <label>職業類型</label>
-          <select name="job" id="job">
-            <option value="">請選擇</option>
-            <option value="上班族">上班族</option>
-            <option value="管理者">管理者</option>
-            <option value="業務">業務</option>
-            <option value="創業者">創業者</option>
-            <option value="自由工作者">自由工作者</option>
-          </select>
-
-          <label>外向程度（1–5）</label>
-          <select name="extro" id="extro">
-            <option value="">請選擇</option>
-            <option value="1">1 非常內向</option>
-            <option value="2">2 偏內向</option>
-            <option value="3">3 中等</option>
-            <option value="4">4 偏外向</option>
-            <option value="5">5 非常外向</option>
-          </select>
-        </div>
-
       </div>
 
-      <button class="btn" type="submit">生成報告</button>
-      <div class="muted" style="margin-top:10px;">提示：若未上傳照片，仍可先生成示範結果；補照片會更準。</div>
-    </form>
+      <!-- 右：熱區圖 + 結果 -->
+      <div class="card heatmap-card">
+        <h2>分析結果</h2>
+
+        <!-- 熱區圖 -->
+        <h3>人體熱區圖（10 區）</h3>
+        <svg id="vhdsHeatmap" viewBox="0 0 220 520" width="260" height="520" style="max-width:100%;height:auto;">
+          <!-- silhouette -->
+          <path d="M110 20c20 0 35 15 35 35s-15 35-35 35-35-15-35-35 15-35 35-35z
+                   M70 90c10-10 20-15 40-15s30 5 40 15l10 40c10 40 10 70 0 110l-10 70
+                   c-5 40-5 60 0 95l5 50c1 12-8 22-20 22h-10c-10 0-18-7-20-17l-10-55
+                   -10 55c-2 10-10 17-20 17H95c-12 0-21-10-20-22l5-50c5-35 5-55 0-95
+                   l-10-70c-10-40-10-70 0-110l10-40z"
+                fill="#0b0f14" opacity="0.10"/>
+
+          <g opacity="0.92">
+            <ellipse id="z_head" cx="110" cy="52" rx="26" ry="26" fill="#dfe7f1"/>
+            <ellipse id="z_face" cx="110" cy="86" rx="22" ry="18" fill="#dfe7f1"/>
+            <rect id="z_chest" x="70" y="110" width="80" height="55" rx="18" fill="#dfe7f1"/>
+            <rect id="z_upper_abd" x="75" y="170" width="70" height="55" rx="18" fill="#dfe7f1"/>
+            <rect id="z_lower_abd" x="78" y="230" width="64" height="55" rx="18" fill="#dfe7f1"/>
+            <rect id="z_pelvis" x="74" y="290" width="72" height="55" rx="18" fill="#dfe7f1"/>
+            <rect id="z_arm_l" x="28" y="130" width="35" height="190" rx="18" fill="#dfe7f1"/>
+            <rect id="z_arm_r" x="157" y="130" width="35" height="190" rx="18" fill="#dfe7f1"/>
+            <rect id="z_leg_l" x="74" y="350" width="34" height="150" rx="18" fill="#dfe7f1"/>
+            <rect id="z_leg_r" x="112" y="350" width="34" height="150" rx="18" fill="#dfe7f1"/>
+          </g>
+        </svg>
+        <div id="heatLegend" class="legend"></div>
+
+        <div class="divider"></div>
+
+        <!-- 結果文字 -->
+        {% if result %}
+          <div class="resultBox">{{ result }}</div>
+        {% else %}
+          <div class="resultBox" style="color:#94a3b8;">
+            目前尚無結果。上傳照片並點「開始分析」後，這裡會顯示報告。
+          </div>
+        {% endif %}
+
+        <div class="divider"></div>
+        <div class="small">
+          若要更準確：<span class="warn">請補上全身正面照</span>（站直、全身入鏡、光線均勻）。
+        </div>
+      </div>
+
+    </div>
   </div>
 
-<script>
-  // 1) 產生/取得 user_id（同一支手機可追蹤歷史）
-  function uuid(){
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
-      const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
-      return v.toString(16);
-    });
-  }
-  let uid = localStorage.getItem("vhds_uid");
-  if(!uid){ uid = uuid(); localStorage.setItem("vhds_uid", uid); }
-  document.getElementById("user_id").value = uid;
-  document.getElementById("uidpill").textContent = "UserID: " + uid.slice(0,8) + "…";
-  document.getElementById("historyLink").href = "/history?uid=" + encodeURIComponent(uid);
+  <!-- 後端傳入的熱區分數（0~100）；若沒有就空物件 -->
+  <script>
+    const HEAT_SCORES = {{ heat_scores|tojson|safe if heat_scores else "{}" }};
+  </script>
+  <script src="/static/heatmap.js"></script>
 
-  // 2) 模式切換
-  const modeInput = document.getElementById("mode");
-  const buttons = document.querySelectorAll(".mode button");
+  <script>
+    // 切換模式：只有健康管理需要輸入身高/體重/年齡
+    const modeSelect = document.getElementById("modeSelect");
+    const healthInputs = document.getElementById("healthInputs");
+    const notReady = document.getElementById("notReady");
 
-  const fHealth = document.getElementById("f_health");
-  const fSkin = document.getElementById("f_skin");
-  const fFortune = document.getElementById("f_fortune");
-  const fSocial = document.getElementById("f_social");
-
-  function show(block){
-    fHealth.style.display = "none";
-    fSkin.style.display = "none";
-    fFortune.style.display = "none";
-    fSocial.style.display = "none";
-    block.style.display = "";
-  }
-
-  function setMode(m){
-    modeInput.value = m;
-    buttons.forEach(b => b.classList.toggle("active", b.dataset.mode === m));
-    if(m==="1") show(fHealth);
-    if(m==="2") show(fSkin);
-    if(m==="3") show(fFortune);
-    if(m==="4") show(fSocial);
-  }
-  buttons.forEach(b => b.addEventListener("click", ()=>setMode(b.dataset.mode)));
-</script>
+    function updateModeUI(){
+      const v = modeSelect.value;
+      if (v === "health"){
+        healthInputs.style.display = "block";
+        notReady.style.display = "none";
+      } else {
+        healthInputs.style.display = "none";
+        notReady.style.display = "block";
+      }
+    }
+    modeSelect.addEventListener("change", updateModeUI);
+    updateModeUI();
+  </script>
 </body>
 </html>
