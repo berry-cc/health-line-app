@@ -150,18 +150,18 @@ def build_system_prompt(mode_key: str) -> str:
 - 不做醫療診斷、不下疾病結論，不替代醫師。
 - 每項 score 為 0~100 的整數。
 - 每項 grade 為 A/B/C/D（A最高）。
-- 每項 desc 繁體中文 <=30字，務實、非診斷。
+- 每項 desc 繁體中文 <=80字，務實、非診斷。
 - overall 為 0~100 整數。
 
 必須輸出以下JSON格式（嚴格一致）：
 {{
   "overall": 0,
   "items": [
-    {{"name":"{labels[0]}", "score": 0, "grade":"A", "desc":"...<=30字"}},
+    {{"name":"{labels[0]}", "score": 0, "grade":"A", "desc":"...<=80字"}},
     ...
-    {{"name":"{labels[-1]}", "score": 0, "grade":"A", "desc":"...<=30字"}}
+    {{"name":"{labels[-1]}", "score": 0, "grade":"A", "desc":"...<=80字"}}
   ],
-  "note": "一句提醒：若要更準確請提供全身照/更多資料（<=30字）"
+  "note": "一句提醒：若要更準確請提供全身照/更多資料（<=80字）"
 }}
 
 10個指標名稱只能從這些裡面選，且必須全部包含一次：{label_text}
