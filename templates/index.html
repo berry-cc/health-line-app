@@ -130,6 +130,17 @@
     .itemScore{font-weight:900; font-size:13px; color:rgba(120,220,255,.95)}
     .itemDesc{margin-top:6px; font-size:12px; color:var(--muted); line-height:1.45}
     canvas{width:100%; height:auto; display:block}
+    /* 讓熱區圖容器更像醫療級全息 UI */
+#heatCanvas {
+  width: 100%;
+  height: 360px;
+  border-radius: 14px;
+  display: block;
+  background: radial-gradient(circle at 50% 30%, rgba(46,240,255,.12), rgba(0,0,0,0) 55%),
+              linear-gradient(180deg, rgba(10,20,45,.65), rgba(5,10,22,.85));
+  box-shadow: 0 0 0 1px rgba(46,240,255,.18) inset,
+              0 10px 30px rgba(0,0,0,.35);
+}
     .twoCanv{display:grid; grid-template-columns:1fr; gap:12px}
     @media(min-width:900px){ .twoCanv{grid-template-columns:1fr 1fr} }
     .error{color:#ffb3b3; font-size:12px; margin-top:8px}
