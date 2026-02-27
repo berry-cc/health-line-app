@@ -1,120 +1,182 @@
-// VHDS Health 人體熱區圖 — 醫療級發光＋呼吸動畫版本
-// Version: Medical Grade Pulse Glow
+// static/heatmap.js
+(function(){
+  const FPS = 12;                 // ✅ 優化：從 60fps 降到 12fps
+  const GLOW_BLUR = 12;           // ✅ 優化：降低 blur 但保留醫療級光暈
+  const BASE_R = 10;              // 熱點半徑
+  const TEXT_SIZE = 12;
 
-let vhdsAnimationFrame = null;
-
-function drawHeatmap(data) {
-
-    const canvas = document.getElementById("heatmapCanvas");
-    if (!canvas) return;
-
+  function setupCanvas(canvas){
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const cssW = canvas.clientWidth || canvas.width;
+    const cssH = canvas.clientHeight || canvas.height;
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
     const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return ctx;
+  }
 
-    canvas.width = 320;
-    canvas.height = 600;
-
-    let time = 0;
-
-    function animate() {
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 呼吸脈動參數
-        const pulse = (Math.sin(time) + 1) / 2;
-
-        drawBody(ctx);
-
-        drawZone(ctx, 160, 90, 30, data.head, pulse);
-        drawZone(ctx, 160, 190, 45, data.chest, pulse);
-        drawZone(ctx, 160, 300, 45, data.core, pulse);
-        drawZone(ctx, 90, 220, 30, data.left_arm, pulse);
-        drawZone(ctx, 230, 220, 30, data.right_arm, pulse);
-        drawZone(ctx, 140, 440, 35, data.left_leg, pulse);
-        drawZone(ctx, 180, 440, 35, data.right_leg, pulse);
-
-        time += 0.05;
-
-        vhdsAnimationFrame = requestAnimationFrame(animate);
-    }
-
-    animate();
-}
-
-
-function drawBody(ctx) {
-
+  function drawBodySilhouette(ctx, w, h){
+    // 簡化醫療人體輪廓（高效、好看）
     ctx.save();
-
-    ctx.strokeStyle = "rgba(0,255,255,0.15)";
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = "rgba(255,255,255,0.30)";
     ctx.lineWidth = 2;
 
-    // 頭
+    const cx = w/2;
+    const top = 26;
+    const headR = 18;
+
+    // head
     ctx.beginPath();
-    ctx.arc(160, 90, 35, 0, Math.PI * 2);
+    ctx.arc(cx, top+headR, headR, 0, Math.PI*2);
     ctx.stroke();
 
-    // 身體
+    // torso
     ctx.beginPath();
-    ctx.moveTo(160, 125);
-    ctx.lineTo(160, 350);
+    ctx.moveTo(cx, top+headR*2+8);
+    ctx.bezierCurveTo(cx-60, top+120, cx-44, top+220, cx-22, top+300);
+    ctx.moveTo(cx, top+headR*2+8);
+    ctx.bezierCurveTo(cx+60, top+120, cx+44, top+220, cx+22, top+300);
     ctx.stroke();
 
-    // 手
+    // shoulders line
     ctx.beginPath();
-    ctx.moveTo(160, 180);
-    ctx.lineTo(90, 250);
-    ctx.moveTo(160, 180);
-    ctx.lineTo(230, 250);
+    ctx.moveTo(cx-70, top+headR*2+30);
+    ctx.lineTo(cx+70, top+headR*2+30);
     ctx.stroke();
 
-    // 腿
+    // legs
     ctx.beginPath();
-    ctx.moveTo(160, 350);
-    ctx.lineTo(130, 500);
-    ctx.moveTo(160, 350);
-    ctx.lineTo(190, 500);
+    ctx.moveTo(cx-22, top+300);
+    ctx.lineTo(cx-34, top+390);
+    ctx.moveTo(cx+22, top+300);
+    ctx.lineTo(cx+34, top+390);
     ctx.stroke();
 
     ctx.restore();
-}
+  }
 
+  function defaultPoints(items, w, h){
+    // 10 熱點固定位置（醫療常見區）
+    const cx = w/2;
+    const y0 = 70;
 
-function drawZone(ctx, x, y, radius, value, pulse) {
+    const pts = [
+      {k:0, x: cx,     y: y0+10},   // 1 眉心/頭部
+      {k:1, x: cx-42,  y: y0+60},   // 2 左眼/顴
+      {k:2, x: cx+42,  y: y0+60},   // 3 右眼/顴
+      {k:3, x: cx,     y: y0+105},  // 4 咽喉
+      {k:4, x: cx,     y: y0+150},  // 5 心肺
+      {k:5, x: cx-38,  y: y0+185},  // 6 左肋/肝脾
+      {k:6, x: cx+38,  y: y0+185},  // 7 右肋/胃
+      {k:7, x: cx,     y: y0+235},  // 8 腹部/代謝
+      {k:8, x: cx-26,  y: y0+290},  // 9 左膝/下肢
+      {k:9, x: cx+26,  y: y0+290},  // 10 右膝/下肢
+    ];
 
-    const intensity = value / 100;
+    return pts.map(p=>{
+      const it = items[p.k] || {name:`指標${p.k+1}`, score:80};
+      return { x:p.x, y:p.y, name: it.name, score: Number(it.score||0) };
+    });
+  }
 
-    const glowSize = radius + 20 * intensity + pulse * 8;
+  function scoreColor(score){
+    // score 0-100 -> color
+    if(score >= 85) return "rgba(80,220,180,0.95)";
+    if(score >= 70) return "rgba(120,220,255,0.95)";
+    if(score >= 55) return "rgba(255,204,102,0.95)";
+    return "rgba(255,107,107,0.95)";
+  }
 
-    const gradient = ctx.createRadialGradient(
-        x, y, radius * 0.2,
-        x, y, glowSize
-    );
+  function drawGlowPoint(ctx, x, y, label, value, t){
+    const pulse = 0.65 + 0.35*Math.sin(t);       // 呼吸
+    const r = BASE_R + 6*pulse;
 
-    const alphaCore = 0.6 + intensity * 0.4;
-    const alphaGlow = 0.1 + intensity * 0.3;
+    const col = scoreColor(value);
 
-    gradient.addColorStop(0, `rgba(0,255,255,${alphaCore})`);
-    gradient.addColorStop(0.4, `rgba(0,200,255,${alphaGlow})`);
-    gradient.addColorStop(1, "rgba(0,255,255,0)");
-
+    // glow
     ctx.save();
-
-    ctx.fillStyle = gradient;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = GLOW_BLUR;
+    ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI*2);
     ctx.fill();
 
+    // core
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.beginPath();
+    ctx.arc(x, y, 3.2, 0, Math.PI*2);
+    ctx.fill();
+
+    // text (name + value)
+    ctx.globalAlpha = 0.95;
+    ctx.font = `700 ${TEXT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
+    ctx.fillStyle = "rgba(234,240,255,0.92)";
+    ctx.textBaseline = "middle";
+    const text = `${label}  ${value}`;
+    ctx.fillText(text, x + 14, y);
+
     ctx.restore();
-}
+  }
 
+  function render(canvasId, items){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    const ctx = setupCanvas(canvas);
 
-// 停止動畫（切換模式時使用）
-function stopHeatmap() {
+    const w = canvas.clientWidth || 520;
+    const h = canvas.clientHeight || 420;
 
-    if (vhdsAnimationFrame) {
+    const pts = defaultPoints(items, w, h);
 
-        cancelAnimationFrame(vhdsAnimationFrame);
+    let running = true;
+    let tick = 0;
 
-        vhdsAnimationFrame = null;
+    function frame(){
+      if(!running) return;
+
+      // background
+      ctx.clearRect(0,0,w,h);
+      // subtle grid
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      for(let i=1;i<6;i++){
+        const y = (h/6)*i;
+        ctx.beginPath(); ctx.moveTo(10,y); ctx.lineTo(w-10,y); ctx.stroke();
+      }
+      ctx.restore();
+
+      // body
+      drawBodySilhouette(ctx, w, h);
+
+      // points
+      const t = tick * 0.22;
+      pts.forEach((p, idx)=>{
+        const phase = t + idx*0.55;
+        drawGlowPoint(ctx, p.x, p.y, p.name, p.score, phase);
+      });
+
+      tick++;
+      setTimeout(frame, Math.floor(1000/FPS)); // ✅ 優化：節流
     }
-}
+
+    frame();
+
+    return ()=>{ running = false; };
+  }
+
+  window.VHDSHeatmap = {
+    start(canvasId, items){
+      try{
+        // stop previous if any
+        if(window.__vhds_heat_stop) window.__vhds_heat_stop();
+      }catch(e){}
+      window.__vhds_heat_stop = render(canvasId, items||[]);
+    }
+  };
+})();
