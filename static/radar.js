@@ -108,8 +108,8 @@
         ctx.fill();
 
         // label position
-        const lx = cx + (R+18)*Math.cos(p.a);
-        const ly = cy + (R+18)*Math.sin(p.a);
+        const lx = cx + (R+34)*Math.cos(p.a);
+        const ly = cy + (R+34)*Math.sin(p.a);
 
         ctx.font = `700 ${LABEL_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
         ctx.fillStyle = "rgba(234,240,255,0.92)";
