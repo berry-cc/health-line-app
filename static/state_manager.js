@@ -1,74 +1,235 @@
 // static/state_manager.js
+// VHDS V3 狀態管理器（穩定版）
+
 (function (global) {
-  const KEY = "vhds_v3_state";
 
-  const DEFAULT = {
-    lang: "zh",
-    mode: "health",
-    inputs: { age: "", height: "", weight: "", waist: "" },
-    photos: [], // [{name,type,size,dataUrl}]
-    lastResult: null, // { idx:number, t:number }
-  };
+const STORAGE_KEY = "vhds_v3_state";
 
-  function load() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return structuredClone(DEFAULT);
-      const parsed = JSON.parse(raw);
-      return {
-        ...structuredClone(DEFAULT),
-        ...parsed,
-        inputs: { ...structuredClone(DEFAULT.inputs), ...(parsed.inputs || {}) },
-        photos: Array.isArray(parsed.photos) ? parsed.photos : [],
-      };
-    } catch {
-      return structuredClone(DEFAULT);
-    }
-  }
+////////////////////////////////////////////////////////////
+// 預設結構
+////////////////////////////////////////////////////////////
 
-  function save(state) {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
+const DEFAULT_STATE = {
 
-  const store = load();
+lang: "zh",
 
-  const VHDSState = {
-    get() {
-      return store;
-    },
+mode: "health",
 
-    setLang(lang) {
-      store.lang = lang || "zh";
-      save(store);
-    },
+inputs: {
 
-    setMode(mode) {
-      store.mode = mode || "health";
-      save(store);
-    },
+age: "",
+height: "",
+weight: "",
+waist: ""
 
-    setInputs(inputs) {
-      store.inputs = { ...store.inputs, ...(inputs || {}) };
-      save(store);
-    },
+},
 
-    setPhotos(photos) {
-      store.photos = Array.isArray(photos) ? photos : [];
-      save(store);
-    },
+photos: [],
 
-    setLastResult(lastResult) {
-      store.lastResult = lastResult || null;
-      save(store);
-    },
+lastResult: null
 
-    resetAll() {
-      const fresh = structuredClone(DEFAULT);
-      Object.keys(store).forEach((k) => delete store[k]);
-      Object.assign(store, fresh);
-      save(store);
-    },
-  };
+};
 
-  global.VHDSState = VHDSState;
+////////////////////////////////////////////////////////////
+// 深拷貝（避免 reference 問題）
+////////////////////////////////////////////////////////////
+
+function clone(obj){
+
+return JSON.parse(JSON.stringify(obj));
+
+}
+
+////////////////////////////////////////////////////////////
+// 載入
+////////////////////////////////////////////////////////////
+
+function load(){
+
+try{
+
+const raw = localStorage.getItem(STORAGE_KEY);
+
+if(!raw) return clone(DEFAULT_STATE);
+
+const parsed = JSON.parse(raw);
+
+return {
+
+...clone(DEFAULT_STATE),
+
+...parsed,
+
+inputs: {
+
+...clone(DEFAULT_STATE.inputs),
+
+...(parsed.inputs || {})
+
+},
+
+photos: Array.isArray(parsed.photos) ? parsed.photos : []
+
+};
+
+}catch(e){
+
+console.warn("VHDS state load error",e);
+
+return clone(DEFAULT_STATE);
+
+}
+
+}
+
+////////////////////////////////////////////////////////////
+// 儲存
+////////////////////////////////////////////////////////////
+
+function save(state){
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+}
+
+////////////////////////////////////////////////////////////
+// 建立實際 state
+////////////////////////////////////////////////////////////
+
+const state = load();
+
+////////////////////////////////////////////////////////////
+// 公開 API
+////////////////////////////////////////////////////////////
+
+const VHDSState = {
+
+get(){
+
+return state;
+
+},
+
+////////////////////////////////////////////////////////
+// 語言
+////////////////////////////////////////////////////////
+
+setLang(lang){
+
+state.lang = lang || "zh";
+
+save(state);
+
+},
+
+////////////////////////////////////////////////////////
+// 模式
+////////////////////////////////////////////////////////
+
+setMode(mode){
+
+state.mode = mode || "health";
+
+save(state);
+
+},
+
+////////////////////////////////////////////////////////
+// 輸入
+////////////////////////////////////////////////////////
+
+setInputs(inputs){
+
+state.inputs = {
+
+...state.inputs,
+
+...(inputs || {})
+
+};
+
+save(state);
+
+},
+
+////////////////////////////////////////////////////////
+// 照片
+////////////////////////////////////////////////////////
+
+setPhotos(photos){
+
+if(!Array.isArray(photos)) return;
+
+state.photos = photos.slice(0,10);
+
+save(state);
+
+},
+
+addPhotos(newPhotos){
+
+if(!Array.isArray(newPhotos)) return;
+
+state.photos = [
+
+...state.photos,
+
+...newPhotos
+
+].slice(0,10);
+
+save(state);
+
+},
+
+clearPhotos(){
+
+state.photos = [];
+
+save(state);
+
+},
+
+////////////////////////////////////////////////////////
+// 上一次結果（做趨勢）
+////////////////////////////////////////////////////////
+
+setLastResult(result){
+
+state.lastResult = {
+
+idx: result.idx,
+
+time: Date.now()
+
+};
+
+save(state);
+
+},
+
+////////////////////////////////////////////////////////
+// 重置（保留語言）
+////////////////////////////////////////////////////////
+
+reset(){
+
+const keepLang = state.lang;
+
+Object.keys(state).forEach(k=>delete state[k]);
+
+Object.assign(state, clone(DEFAULT_STATE));
+
+state.lang = keepLang;
+
+save(state);
+
+}
+
+};
+
+////////////////////////////////////////////////////////////
+
+global.VHDSState = VHDSState;
+
 })(window);
