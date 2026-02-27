@@ -5,6 +5,9 @@ app = Flask(__name__)
 
 APP_NAME = "VHDS Health自我健康管理"
 
+@app.route("/")
+def index():
+    return render_template("index.html")
 # =========================
 # 指標定義（四模式）
 # =========================
