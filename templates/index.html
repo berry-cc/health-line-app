@@ -1,339 +1,90 @@
-<!-- templates/index.html  （V3 版本：可直接整份覆蓋貼上） -->
+<!-- templates/index.html -->
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VHDS V3</title>
-
-  <!-- 你若已有自己的 CSS，可改成載入你原本的檔案 -->
-  <style>
-    :root{
-      --bg:#0b1020; --text:#e5e7eb; --muted:#9ca3af; --line:rgba(255,255,255,.10);
-      --card:rgba(255,255,255,.05); --shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Helvetica Neue",Arial;
-      background: radial-gradient(1200px 700px at 10% 5%, rgba(34,197,94,.16), transparent 60%),
-                  radial-gradient(900px 600px at 80% 10%, rgba(59,130,246,.16), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    .topbar{
-      position:sticky; top:0; z-index:50;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px;
-      border-bottom:1px solid var(--line);
-      backdrop-filter: blur(12px);
-      background: rgba(11,16,32,.55);
-    }
-    .brand{font-weight:900; letter-spacing:.4px}
-    .ver{font-weight:700; color:var(--muted); margin-left:6px; font-size:.9em}
-    .lang{display:flex; gap:8px}
-    .glass{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:8px 10px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:800;
-    }
-    .glass.active{outline:2px solid rgba(34,197,94,.35)}
-    .container{max-width:1080px; margin:18px auto; padding:0 14px 30px}
-    .card{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow: var(--shadow);
-      padding:18px;
-      margin:14px 0;
-    }
-    h2{margin:0 0 14px; font-size:20px}
-    .grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
-    @media (max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
-    .field span{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
-    .field input{
-      width:100%; padding:10px 12px; border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      color:var(--text); outline:none;
-    }
-    .row{display:flex; gap:12px; align-items:flex-start; margin-top:14px}
-    @media (max-width:900px){ .row{flex-direction:column} }
-    .mode label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
-    .mode select{
-      padding:10px 12px; border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      color:var(--text);
-      min-width:220px;
-    }
-    .uploader{flex:1}
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:10px 12px; border-radius:12px;
-      border:1px dashed rgba(255,255,255,.22);
-      background: rgba(255,255,255,.04);
-      cursor:pointer; user-select:none;
-    }
-    .btn input{display:none}
-    .hint{margin-top:8px; color:var(--muted); font-size:12px}
-    .preview{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .thumb{
-      width:88px; height:88px; border-radius:14px; border:1px solid var(--line);
-      object-fit:cover; background:#111827;
-    }
-    .actions{justify-content:flex-end}
-    .primary,.ghost{
-      padding:12px 14px; border-radius:14px; cursor:pointer; font-weight:900;
-      border:1px solid var(--line); background: rgba(255,255,255,.03); color:var(--text);
-    }
-    .primary{border-color:rgba(34,197,94,.55); background: rgba(34,197,94,.12)}
-    .alert{
-      margin-top:12px; padding:12px 12px; border-radius:14px;
-      border:1px solid rgba(239,68,68,.45);
-      background: rgba(239,68,68,.10);
-      color:#fecaca; font-weight:800;
-    }
-    .hidden{display:none !important}
-    .muted{color:var(--muted); font-size:12px}
-
-    /* Summary (V3) */
-    .summaryTop{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
-    @media (max-width:900px){ .summaryTop{grid-template-columns:1fr} }
-    .box{padding:14px; border:1px solid var(--line); border-radius:16px; background:rgba(0,0,0,.10)}
-    .kpiTitle{font-size:12px; color:var(--muted); margin-bottom:8px}
-    .gauge{position:relative; height:190px}
-    .gaugeArc{
-      position:absolute; left:18px; right:18px; top:10px; height:140px;
-      border-radius:999px 999px 14px 14px;
-      background: conic-gradient(from 180deg,
-        rgba(239,68,68,.95) 0deg 40deg,
-        rgba(245,158,11,.95) 40deg 95deg,
-        rgba(163,230,53,.95) 95deg 135deg,
-        rgba(16,185,129,.95) 135deg 180deg);
-      mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 100%);
-      -webkit-mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 100%);
-    }
-    .needle{
-      position:absolute; left:50%; top:95px; width:4px; height:72px;
-      background:#e5e7eb; transform-origin:bottom center;
-      transform: translateX(-50%) rotate(-90deg);
-      border-radius:999px;
-      box-shadow:0 2px 12px rgba(0,0,0,.45);
-    }
-    .kpi{position:absolute; left:0; right:0; top:54px; text-align:center}
-    .score{font-size:54px; font-weight:1000; line-height:1}
-    .label{margin-top:6px; font-size:14px; color:var(--muted); font-weight:900}
-    .band{
-      position:absolute; bottom:4px; left:10px; right:10px;
-      display:flex; justify-content:space-between;
-      color:rgba(229,231,235,.55);
-      font-size:11px;
-    }
-    .subline{margin-top:6px; color:var(--muted); font-size:12px}
-    .dot{margin:0 8px; opacity:.7}
-    .pillRow{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .pill{border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(0,0,0,.10)}
-    .pillTitle{font-size:12px; color:var(--muted)}
-    .pillValue{margin-top:4px; font-size:18px; font-weight:1000}
-    .potential{border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(0,0,0,.10)}
-    .bar{height:12px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden}
-    .fill{height:100%; width:0%; background:linear-gradient(90deg, rgba(34,197,94,.9), rgba(34,197,94,.35))}
-    .sectionTitle{font-weight:1000; margin:6px 0 10px}
-    .top3{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px}
-    @media (max-width:900px){ .top3{grid-template-columns:1fr} }
-    .topcard{border:1px solid var(--line); border-radius:16px; background:rgba(0,0,0,.10); padding:12px; display:flex; gap:10px}
-    .badge{
-      width:28px; height:28px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-      font-weight:1000; border:1px solid rgba(245,158,11,.45); background:rgba(245,158,11,.25);
-    }
-    .icon{
-      width:52px; height:52px; border-radius:14px; border:1px solid var(--line);
-      display:flex; align-items:center; justify-content:center; font-size:26px; background:rgba(255,255,255,.04);
-    }
-    .topinfo{flex:1}
-    .topname{font-weight:1000; margin-bottom:4px}
-    .topscore{color:#fca5a5; font-weight:1000}
-    .topmeta{margin-top:6px; font-size:12px; color:var(--muted)}
-    .toplift{margin-top:6px; font-size:12px; color:rgba(34,197,94,.9); font-weight:1000}
-    .summaryBottom{display:grid; grid-template-columns: .95fr 1.05fr; gap:14px; margin-top:14px}
-    @media (max-width:900px){ .summaryBottom{grid-template-columns:1fr} }
-    .execText{line-height:1.55; color:#e5e7eb; font-size:13px; white-space:pre-line}
-    .metrics{display:flex; flex-direction:column; gap:10px}
-    .metric{border:1px solid var(--line); border-radius:14px; padding:10px; background:rgba(255,255,255,.03)}
-    .metricHead{display:flex; justify-content:space-between; align-items:center}
-    .metricName{font-weight:1000}
-    .metricScore{font-weight:1000; color:rgba(34,197,94,.95)}
-    .metricDesc{margin-top:6px; font-size:12px; color:var(--muted)}
-  </style>
-
-  <!-- Chart.js（若你的 radar.js 不是 Chart.js，可保留也不影響；若你用自繪 canvas，可把這行移除） -->
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <!-- face-api.js（可選；若你 face_validation.js 會用到） -->
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VHDS V3</title>
 </head>
 
-<body>
-  <header class="topbar">
-    <div class="brand">VHDS <span class="ver">V3</span></div>
+<body style="background:#0b1020;color:white;font-family:sans-serif">
 
-    <div class="lang">
-      <button class="glass" data-lang="zh">中</button>
-      <button class="glass" data-lang="en">EN</button>
-      <button class="glass" data-lang="ja">日</button>
-      <button class="glass" data-lang="ko">한</button>
-    </div>
-  </header>
+<h2>VHDS V3 分析</h2>
 
-  <main class="container">
-    <!-- Inputs -->
-    <section class="card">
-      <h2 id="t_input">輸入資料</h2>
+<form method="POST" action="/analyze" enctype="multipart/form-data">
 
-      <div class="grid">
-        <label class="field">
-          <span id="t_age">年齡</span>
-          <input id="age" type="number" min="0" max="120" placeholder="例如 50" />
-        </label>
-        <label class="field">
-          <span id="t_height">身高 (cm)</span>
-          <input id="height" type="number" min="0" max="250" placeholder="例如 158" />
-        </label>
-        <label class="field">
-          <span id="t_weight">體重 (kg)</span>
-          <input id="weight" type="number" min="0" max="300" placeholder="例如 64" />
-        </label>
-        <label class="field">
-          <span id="t_waist">腰圍 (吋)</span>
-          <input id="waist" type="number" min="0" max="80" placeholder="例如 34" />
-        </label>
-      </div>
+年齡:
+<input name="age" id="age"><br><br>
 
-      <div class="row">
-        <div class="mode">
-          <label id="t_mode">分析模式</label>
-          <select id="mode">
-            <option value="health">健康</option>
-            <option value="skin">肌膚</option>
-            <option value="fortune">面相運勢</option>
-            <option value="psy">人際心理</option>
-          </select>
-        </div>
+身高:
+<input name="height" id="height"><br><br>
 
-        <div class="uploader">
-          <label class="btn">
-            <input id="photos" type="file" accept="image/*" multiple />
-            <span id="t_upload">上傳照片（可多張）</span>
-          </label>
-          <div class="hint" id="t_hint">建議：清晰人像、光線充足、臉部占畫面適中。</div>
-        </div>
-      </div>
+體重:
+<input name="weight" id="weight"><br><br>
 
-      <div id="photoPreview" class="preview"></div>
+腰圍:
+<input name="waist" id="waist"><br><br>
 
-      <div class="row actions">
-        <button id="analyze" class="primary">開始分析</button>
-        <button id="reset" class="ghost">清除（不建議）</button>
-      </div>
+模式:
+<select name="mode" id="mode">
+<option value="health">健康</option>
+<option value="skin">肌膚</option>
+<option value="face">面相</option>
+<option value="psy">心理</option>
+</select>
 
-      <div id="alert" class="alert hidden"></div>
-    </section>
+<br><br>
 
-    <!-- Summary -->
-    <section id="summary" class="card hidden">
-      <h2 id="t_summary">綜合狀態總結</h2>
+上傳照片:
+<input type="file" name="photo" id="photos" multiple>
 
-      <div class="summaryTop">
-        <div class="box">
-          <div class="kpiTitle" id="t_vhdsIndex">VHDS 指數</div>
-          <div class="gauge">
-            <div class="gaugeArc"></div>
-            <div class="needle" id="needle"></div>
-            <div class="kpi">
-              <div class="score" id="vhdsScore">--</div>
-              <div class="label" id="vhdsLabel">--</div>
-            </div>
-            <div class="band">
-              <span>0</span><span>39</span><span>60</span><span>75</span><span>100</span>
-            </div>
-          </div>
-          <div class="subline">
-            <span id="trend">—</span>
-            <span class="dot">•</span>
-            <span id="confidence">分析信心 —%</span>
-          </div>
-        </div>
+<div id="photoPreview"></div>
 
-        <div class="rightBox" style="display:flex; flex-direction:column; gap:10px">
-          <div class="pillRow">
-            <div class="pill">
-              <div class="pillTitle" id="t_todayState">今日狀態</div>
-              <div class="pillValue" id="todayState">—</div>
-            </div>
-            <div class="pill">
-              <div class="pillTitle" id="t_bioAge">VHDS 生理年齡</div>
-              <div class="pillValue" id="bioAge">—</div>
-            </div>
-          </div>
+<br>
 
-          <div class="potential">
-            <div class="pillTitle" id="t_potential" style="margin-bottom:8px">改善潛力</div>
-            <div class="bar">
-              <div id="potentialFill" class="fill"></div>
-            </div>
-            <div class="subline" style="margin-top:8px">
-              <span id="potentialPct">—%</span>
-              <span class="dot">•</span>
-              <span id="window">最佳提升期剩餘 — 天</span>
-            </div>
-          </div>
+<button type="submit">開始分析</button>
 
-          <div class="pill">
-            <div class="pillTitle" id="t_priorityAction">今日優先行動</div>
-            <div class="pillValue" id="priorityAction" style="font-size:14px">—</div>
-            <div class="subline" id="expectedLift">預期提升：—</div>
-          </div>
-        </div>
-      </div>
+</form>
 
-      <div style="margin-top:14px">
-        <div class="sectionTitle" id="t_top3">需關注部位 TOP 3</div>
-        <div id="top3" class="top3"></div>
-      </div>
+<hr>
 
-      <div class="summaryBottom">
-        <div class="box">
-          <div class="sectionTitle" id="t_radar">狀態輪廓（雷達圖）</div>
-          <canvas id="radar" width="420" height="420"></canvas>
-        </div>
+{% if result %}
 
-        <div class="box">
-          <div class="sectionTitle" id="t_exec">Executive Summary</div>
-          <div id="execSummary" class="execText">—</div>
+<h3>總分: {{result.overall}}</h3>
 
-          <div class="sectionTitle" id="t_metrics" style="margin-top:14px">十大指標（名稱 + 分數 + 說明）</div>
-          <div id="metrics" class="metrics"></div>
-        </div>
-      </div>
-    </section>
+{% for item in result.items %}
 
-    <footer style="padding:10px 2px">
-      <div class="muted">VHDS V3（沿用 V2.2 Flask 專案路徑：templates/ + static/）</div>
-    </footer>
-  </main>
+<div>
+{{item.name}} : {{item.score}}
+</div>
 
-  <!-- ✅ V3 需要的 JS 載入順序（沿用你的 V2.2 專案路徑） -->
-  <script src="{{ url_for('static', filename='state_manager.js') }}"></script>
-  <script src="{{ url_for('static', filename='lang.js') }}"></script>
-  <script src="{{ url_for('static', filename='face_validation.js') }}"></script>
-  <script src="{{ url_for('static', filename='vhds_engine.js') }}"></script>
-  <script src="{{ url_for('static', filename='radar.js') }}"></script>
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endfor %}
+
+{% endif %}
+
+<script>
+
+document.getElementById("photos").addEventListener("change",function(e){
+
+const preview=document.getElementById("photoPreview");
+
+preview.innerHTML="";
+
+for(const file of e.target.files){
+
+const img=document.createElement("img");
+
+img.src=URL.createObjectURL(file);
+
+img.style.width="80px";
+
+preview.appendChild(img);
+
+}
+
+});
+
+</script>
+
 </body>
 </html>
-          
