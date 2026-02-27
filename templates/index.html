@@ -518,7 +518,7 @@ window.VHDS = {
 };
 </script>
 
-<script src="{{ url_for('static', filename='heatmap.js') }}"></script>
+
 <script>
   // --- VHDS data bridge (確保一定有資料，不會 undefined) ---
   window.__VHDS__ = window.__VHDS__ || {};
@@ -570,5 +570,6 @@ window.VHDS = {
     bootVHDS();
   }
 </script>
+<script src="{{ url_for('static', filename='heatmap.js') }}"></script>    
 </body>
 </html>
