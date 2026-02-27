@@ -465,15 +465,23 @@ function renderAll(){
     itemsEl.appendChild(div);
   });
 
-  renderRadarFromVHDS();
-  // radar + heat
-  if(window.VHDSRadar && window.VHDSRadar.start){
-    window.VHDSRadar.start("radarCanvas", r.items||[]);
-  }
-  if(window.VHDSHeatmap && window.VHDSHeatmap.start){
-    // 10 hot points: map from items (name+score)
-    window.VHDSHeatmap.start("heatCanvas", r.items||[]);
-  }
+// ===== VHDS V2.2 Radar + Heatmap render =====
+
+// Radar (醫療級發光 + 名稱 + 數值)
+if(window.VHDSRadar && typeof window.VHDSRadar.start==="function"){
+    window.VHDSRadar.start("radarCanvas", r.items || []);
+}
+
+// Heatmap (人體10熱區 + 發光 + 呼吸脈動 + 名稱 + 數值)
+if(window.VHDSHeatmap && typeof window.VHDSHeatmap.start==="function"){
+
+    const heatItems = (r.items||[]).slice(0,10).map((it,i)=>({
+        name: it.name || ("指標"+(i+1)),
+        score: Number(it.score)||0
+    }));
+
+    window.VHDSHeatmap.start("heatCanvas", heatItems);
+}
 }
 
 function escapeHtml(s){
