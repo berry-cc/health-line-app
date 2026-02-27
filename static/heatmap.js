@@ -1,182 +1,277 @@
-// static/heatmap.js
-(function(){
-  const FPS = 12;                 // ✅ 優化：從 60fps 降到 12fps
-  const GLOW_BLUR = 12;           // ✅ 優化：降低 blur 但保留醫療級光暈
-  const BASE_R = 10;              // 熱點半徑
-  const TEXT_SIZE = 12;
+/* static/heatmap.js
+   VHDS V2.2 - Medical-grade Heatmap (10 hotspots + glow + breathing pulse + label+score)
+*/
+(function () {
+  "use strict";
 
-  function setupCanvas(canvas){
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const cssW = canvas.clientWidth || canvas.width;
-    const cssH = canvas.clientHeight || canvas.height;
-    canvas.width = Math.floor(cssW * dpr);
-    canvas.height = Math.floor(cssH * dpr);
-    const ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    return ctx;
+  const DPR = () => Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function toNum(v, d = 0) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : d;
   }
 
-  function drawBodySilhouette(ctx, w, h){
-    // 簡化醫療人體輪廓（高效、好看）
-    ctx.save();
-    ctx.globalAlpha = 0.25;
-    ctx.strokeStyle = "rgba(255,255,255,0.30)";
-    ctx.lineWidth = 2;
+  function normalizeItems(items) {
+    // items: [{name, score, desc}, ...]
+    if (!Array.isArray(items)) return [];
+    return items.slice(0, 10).map((it, idx) => ({
+      name: (it && it.name) ? String(it.name) : `指標${idx + 1}`,
+      score: clamp(toNum(it && it.score, 0), 0, 100),
+      desc: (it && it.desc) ? String(it.desc) : ""
+    }));
+  }
 
-    const cx = w/2;
-    const top = 26;
-    const headR = 18;
+  function fitCanvas(canvas) {
+    const dpr = DPR();
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(10, Math.floor(rect.width));
+    const h = Math.max(10, Math.floor(rect.height));
+
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+    return { ctx, w, h };
+  }
+
+  function drawBackdrop(ctx, w, h) {
+    // medical dark glass panel
+    ctx.clearRect(0, 0, w, h);
+
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "rgba(10,18,35,1)");
+    bg.addColorStop(1, "rgba(6,12,26,1)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    // subtle grid
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = "rgba(120,160,255,0.35)";
+    ctx.lineWidth = 1;
+    const step = 24;
+    for (let x = 0; x <= w; x += step) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= h; y += step) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // vignette
+    ctx.save();
+    const vg = ctx.createRadialGradient(w * 0.5, h * 0.55, Math.min(w, h) * 0.1, w * 0.5, h * 0.55, Math.min(w, h) * 0.75);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  function drawSilhouette(ctx, w, h) {
+    // simple medical silhouette (front view)
+    const cx = w * 0.5;
+    const top = h * 0.12;
+    const bodyTop = h * 0.22;
+    const bodyBottom = h * 0.86;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(180,210,255,0.35)";
+    ctx.lineWidth = 2;
+    ctx.shadowColor = "rgba(0,255,220,0.22)";
+    ctx.shadowBlur = 12;
 
     // head
+    const headR = Math.min(w, h) * 0.07;
     ctx.beginPath();
-    ctx.arc(cx, top+headR, headR, 0, Math.PI*2);
+    ctx.arc(cx, top + headR, headR, 0, Math.PI * 2);
     ctx.stroke();
 
-    // torso
-    ctx.beginPath();
-    ctx.moveTo(cx, top+headR*2+8);
-    ctx.bezierCurveTo(cx-60, top+120, cx-44, top+220, cx-22, top+300);
-    ctx.moveTo(cx, top+headR*2+8);
-    ctx.bezierCurveTo(cx+60, top+120, cx+44, top+220, cx+22, top+300);
-    ctx.stroke();
-
-    // shoulders line
-    ctx.beginPath();
-    ctx.moveTo(cx-70, top+headR*2+30);
-    ctx.lineTo(cx+70, top+headR*2+30);
-    ctx.stroke();
-
-    // legs
-    ctx.beginPath();
-    ctx.moveTo(cx-22, top+300);
-    ctx.lineTo(cx-34, top+390);
-    ctx.moveTo(cx+22, top+300);
-    ctx.lineTo(cx+34, top+390);
+    // torso (rounded rect)
+    const bw = w * 0.28;
+    const bh = bodyBottom - bodyTop;
+    const bx = cx - bw / 2;
+    const br = Math.min(24, bw * 0.18);
+    roundRect(ctx, bx, bodyTop, bw, bh, br);
     ctx.stroke();
 
     ctx.restore();
   }
 
-  function defaultPoints(items, w, h){
-    // 10 熱點固定位置（醫療常見區）
-    const cx = w/2;
-    const y0 = 70;
-
-    const pts = [
-      {k:0, x: cx,     y: y0+10},   // 1 眉心/頭部
-      {k:1, x: cx-42,  y: y0+60},   // 2 左眼/顴
-      {k:2, x: cx+42,  y: y0+60},   // 3 右眼/顴
-      {k:3, x: cx,     y: y0+105},  // 4 咽喉
-      {k:4, x: cx,     y: y0+150},  // 5 心肺
-      {k:5, x: cx-38,  y: y0+185},  // 6 左肋/肝脾
-      {k:6, x: cx+38,  y: y0+185},  // 7 右肋/胃
-      {k:7, x: cx,     y: y0+235},  // 8 腹部/代謝
-      {k:8, x: cx-26,  y: y0+290},  // 9 左膝/下肢
-      {k:9, x: cx+26,  y: y0+290},  // 10 右膝/下肢
-    ];
-
-    return pts.map(p=>{
-      const it = items[p.k] || {name:`指標${p.k+1}`, score:80};
-      return { x:p.x, y:p.y, name: it.name, score: Number(it.score||0) };
-    });
-  }
-
-  function scoreColor(score){
-    // score 0-100 -> color
-    if(score >= 85) return "rgba(80,220,180,0.95)";
-    if(score >= 70) return "rgba(120,220,255,0.95)";
-    if(score >= 55) return "rgba(255,204,102,0.95)";
-    return "rgba(255,107,107,0.95)";
-  }
-
-  function drawGlowPoint(ctx, x, y, label, value, t){
-    const pulse = 0.65 + 0.35*Math.sin(t);       // 呼吸
-    const r = BASE_R + 6*pulse;
-
-    const col = scoreColor(value);
-
-    // glow
-    ctx.save();
-    ctx.shadowColor = col;
-    ctx.shadowBlur = GLOW_BLUR;
-    ctx.fillStyle = col;
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function hotspotLayout(w, h) {
+    // 10 hotspots: head, face, chest, upper abd, lower abd, pelvis, arm L/R, leg L/R
+    // positions are relative to silhouette
+    const cx = w * 0.5;
+    return [
+      { key: "z_head",  x: cx,        y: h * 0.18, side: "C" },
+      { key: "z_face",  x: cx,        y: h * 0.22, side: "C" },
+      { key: "z_chest", x: cx,        y: h * 0.36, side: "C" },
+      { key: "z_upper_abd", x: cx,    y: h * 0.48, side: "C" },
+      { key: "z_lower_abd", x: cx,    y: h * 0.56, side: "C" },
+      { key: "z_pelvis", x: cx,       y: h * 0.66, side: "C" },
+      { key: "z_arm_l", x: cx - w*0.18, y: h * 0.46, side: "L" },
+      { key: "z_arm_r", x: cx + w*0.18, y: h * 0.46, side: "R" },
+      { key: "z_leg_l", x: cx - w*0.10, y: h * 0.82, side: "L" },
+      { key: "z_leg_r", x: cx + w*0.10, y: h * 0.82, side: "R" },
+    ];
+  }
+
+  function scoreToGlow(score) {
+    // 0..100 -> intensity & radius
+    const s = clamp(score, 0, 100);
+    const intensity = 0.25 + (s / 100) * 0.75;
+    const radius = 16 + (s / 100) * 20;
+    return { intensity, radius };
+  }
+
+  function drawHotspot(ctx, x, y, score, pulse) {
+    const { intensity, radius } = scoreToGlow(score);
+    const r = radius * (1 + 0.10 * pulse);
+
+    // outer glow
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.shadowColor = "rgba(0,255,220,0.55)";
+    ctx.shadowBlur = 22;
+
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(255,80,120,${0.85 * intensity})`);
+    g.addColorStop(0.45, `rgba(255,80,120,${0.35 * intensity})`);
+    g.addColorStop(1, "rgba(255,80,120,0)");
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
 
     // core
     ctx.shadowBlur = 0;
-    ctx.globalAlpha = 0.95;
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.fillStyle = `rgba(255,120,170,${0.85 * intensity})`;
     ctx.beginPath();
-    ctx.arc(x, y, 3.2, 0, Math.PI*2);
+    ctx.arc(x, y, 5.5, 0, Math.PI * 2);
     ctx.fill();
-
-    // text (name + value)
-    ctx.globalAlpha = 0.95;
-    ctx.font = `700 ${TEXT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
-    ctx.fillStyle = "rgba(234,240,255,0.92)";
-    ctx.textBaseline = "middle";
-    const text = `${label}  ${value}`;
-    ctx.fillText(text, x + 14, y);
 
     ctx.restore();
   }
 
-  function render(canvasId, items){
-    const canvas = document.getElementById(canvasId);
-    if(!canvas) return;
-    const ctx = setupCanvas(canvas);
+  function drawLabel(ctx, x, y, name, score, side) {
+    ctx.save();
+    ctx.font = "12px Arial";
+    ctx.textBaseline = "middle";
 
-    const w = canvas.clientWidth || 520;
-    const h = canvas.clientHeight || 420;
+    const txt = `${name} ${score}`;
+    const pad = 7;
+    const tw = ctx.measureText(txt).width;
+    const boxW = tw + pad * 2;
+    const boxH = 22;
 
-    const pts = defaultPoints(items, w, h);
+    // place label next to point
+    let bx = x + 14;
+    if (side === "L") bx = x - 14 - boxW;
+    if (side === "C") bx = x - boxW / 2;
 
-    let running = true;
-    let tick = 0;
+    let by = y - boxH / 2;
+    bx = clamp(bx, 6, Math.max(6, ctx.canvas.width / DPR() - boxW - 6));
+    by = clamp(by, 6, Math.max(6, ctx.canvas.height / DPR() - boxH - 6));
 
-    function frame(){
-      if(!running) return;
+    // glass pill
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "rgba(10,22,45,0.70)";
+    ctx.strokeStyle = "rgba(120,200,255,0.35)";
+    ctx.lineWidth = 1;
 
-      // background
-      ctx.clearRect(0,0,w,h);
-      // subtle grid
-      ctx.save();
-      ctx.globalAlpha = 0.08;
-      ctx.strokeStyle = "rgba(255,255,255,0.25)";
-      for(let i=1;i<6;i++){
-        const y = (h/6)*i;
-        ctx.beginPath(); ctx.moveTo(10,y); ctx.lineTo(w-10,y); ctx.stroke();
-      }
-      ctx.restore();
+    roundRect(ctx, bx, by, boxW, boxH, 10);
+    ctx.fill();
+    ctx.stroke();
 
-      // body
-      drawBodySilhouette(ctx, w, h);
+    // text
+    ctx.fillStyle = "rgba(235,245,255,0.95)";
+    ctx.textAlign = "center";
+    ctx.fillText(txt, bx + boxW / 2, by + boxH / 2);
 
-      // points
-      const t = tick * 0.22;
-      pts.forEach((p, idx)=>{
-        const phase = t + idx*0.55;
-        drawGlowPoint(ctx, p.x, p.y, p.name, p.score, phase);
-      });
-
-      tick++;
-      setTimeout(frame, Math.floor(1000/FPS)); // ✅ 優化：節流
-    }
-
-    frame();
-
-    return ()=>{ running = false; };
+    ctx.restore();
   }
 
-  window.VHDSHeatmap = {
-    start(canvasId, items){
-      try{
-        // stop previous if any
-        if(window.__vhds_heat_stop) window.__vhds_heat_stop();
-      }catch(e){}
-      window.__vhds_heat_stop = render(canvasId, items||[]);
+  function drawHeatmapFrame(ctx, w, h, items, t) {
+    drawBackdrop(ctx, w, h);
+    drawSilhouette(ctx, w, h);
+
+    const pts = hotspotLayout(w, h);
+
+    // If items < 10, still show with defaults
+    const safeItems = [];
+    for (let i = 0; i < 10; i++) {
+      safeItems.push(items[i] || { name: `指標${i + 1}`, score: 0 });
     }
-  };
+
+    // breathing pulse 0..1
+    const pulse = 0.85 + 0.15 * Math.sin(t / 420);
+
+    // hotspots
+    for (let i = 0; i < 10; i++) {
+      const p = pts[i];
+      const it = safeItems[i];
+      drawHotspot(ctx, p.x, p.y, it.score, pulse);
+    }
+
+    // labels on top (ensure readable)
+    for (let i = 0; i < 10; i++) {
+      const p = pts[i];
+      const it = safeItems[i];
+      drawLabel(ctx, p.x, p.y, it.name, it.score, p.side);
+    }
+  }
+
+  let anim = null;
+
+  function start(canvasId, items) {
+    const c = document.getElementById(canvasId);
+    if (!c) return;
+
+    const list = normalizeItems(items);
+
+    // stop previous
+    if (anim) cancelAnimationFrame(anim);
+    let lastW = 0, lastH = 0;
+
+    const loop = (ts) => {
+      const { ctx, w, h } = fitCanvas(c);
+
+      // avoid extra work if hidden
+      if (w !== lastW || h !== lastH) {
+        lastW = w; lastH = h;
+      }
+
+      drawHeatmapFrame(ctx, w, h, list, ts);
+      anim = requestAnimationFrame(loop);
+    };
+
+    anim = requestAnimationFrame(loop);
+  }
+
+  function stop() {
+    if (anim) cancelAnimationFrame(anim);
+    anim = null;
+  }
+
+  window.VHDSHeatmap = { start, stop };
 })();
