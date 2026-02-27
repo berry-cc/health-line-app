@@ -1,29 +1,53 @@
-<!-- templates/index.html -->
 <!doctype html>
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VHDS V3</title>
+
+<style>
+body{
+background:#0b1020;
+color:white;
+font-family:sans-serif;
+padding:20px;
+}
+input,select,button{
+padding:8px;
+margin:5px;
+}
+#photoPreview img{
+width:80px;
+margin:5px;
+border-radius:8px;
+}
+button{
+background:#22c55e;
+color:white;
+border:none;
+cursor:pointer;
+}
+</style>
+
 </head>
 
-<body style="background:#0b1020;color:white;font-family:sans-serif">
+<body>
 
 <h2>VHDS V3 分析</h2>
 
 <form method="POST" action="/analyze" enctype="multipart/form-data">
 
 年齡:
-<input name="age" id="age"><br><br>
+<input name="age" id="age"><br>
 
 身高:
-<input name="height" id="height"><br><br>
+<input name="height" id="height"><br>
 
 體重:
-<input name="weight" id="weight"><br><br>
+<input name="weight" id="weight"><br>
 
 腰圍:
-<input name="waist" id="waist"><br><br>
+<input name="waist" id="waist"><br>
 
 模式:
 <select name="mode" id="mode">
@@ -52,6 +76,8 @@
 
 <h3>總分: {{result.overall}}</h3>
 
+<canvas id="radarCanvas" width="400" height="400"></canvas>
+
 {% for item in result.items %}
 
 <div>
@@ -76,13 +102,27 @@ const img=document.createElement("img");
 
 img.src=URL.createObjectURL(file);
 
-img.style.width="80px";
-
 preview.appendChild(img);
 
 }
 
 });
+
+</script>
+
+<script src="{{ url_for('static', filename='radar.js') }}"></script>
+
+<script>
+
+{% if result %}
+
+const items = {{result.items | tojson}};
+
+if(window.VHDSRadar){
+VHDSRadar.start("radarCanvas", items);
+}
+
+{% endif %}
 
 </script>
 
