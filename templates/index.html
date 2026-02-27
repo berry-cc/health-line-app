@@ -395,7 +395,7 @@
   </script>
 
   <!-- Heatmap effect -->
-<script src="/static/heatmap.js">
+<script src="/static/heatmap.js"></script>
 
 <script>
 window.__VHDS__ = {
@@ -404,113 +404,91 @@ window.__VHDS__ = {
     photo_preview: {{ photo_preview|tojson if photo_preview else "null" }}
 };
 </script>
-    // ===== Language dictionary (UI only). 4 languages. =====
-    const I18N = {
-      zh:{
-        title:"VHDS Health 自我健康管理",
-        sub:"四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）",
-        uploadTitle:"上傳照片與選擇分析",
-        uploadHint:"建議光線充足、正面清晰。若未上傳全身照，仍可執行量化評估與視覺化展示。",
-        photoLabel:"上傳照片（建議：光線充足）",
-        photoSmall:"手機可直接拍照或選擇相簿",
-        modeLabel:"選擇分析模式",
-        modeHealth:"1. 健康管理",
-        modeSkin:"2. 肌膚管理",
-        modeFace:"3. 面相學分析",
-        modePsy:"4. 心理學分析",
-        age:"年齡（歲）",
-        height:"身高（cm）",
-        weight:"體重（kg）",
-        waist:"腰圍（吋）",
-        submit:"開始分析",
-        overall:"總評分",
-        modeNow:"模式：",
-        heatTitle:"人體熱區圖",
-        heatHint:"發光 + 呼吸脈動（展示用）",
-        radarTitle:"雷達圖",
-        radarHint:"發光動畫（展示用）",
-        note:"本頁為「正式展示版」架構：分數與指標由後端回傳；若後端未回傳，前端會用預設示範值顯示。",
-        itemsTitle:"10 指標（60字內說明）",
-      },
-      en:{
-        title:"VHDS Health Self-Management",
-        sub:"4 modes · 10 metrics each · Quant scores + Visuals (Heat + Radar)",
-        uploadTitle:"Upload Photo & Select Mode",
-        uploadHint:"Use clear front-facing photo under good lighting. Full-body is optional for demo visuals.",
-        photoLabel:"Upload Photo (good lighting)",
-        photoSmall:"You can take a photo or pick from album",
-        modeLabel:"Select Mode",
-        modeHealth:"1. Health Management",
-        modeSkin:"2. Skin Management",
-        modeFace:"3. Face Reading",
-        modePsy:"4. Psychology",
-        age:"Age",
-        height:"Height (cm)",
-        weight:"Weight (kg)",
-        waist:"Waist (inch)",
-        submit:"Analyze",
-        overall:"Overall",
-        modeNow:"Mode:",
-        heatTitle:"Body Heat Zones",
-        heatHint:"Glow + Breathing pulse (demo)",
-        radarTitle:"Radar Chart",
-        radarHint:"Glow animation (demo)",
-        note:"This is a production-style demo. Backend may provide scores; otherwise defaults are used.",
-        itemsTitle:"10 Metrics (≤ 60 chars/line)",
-      },
-      jp:{
-        title:"VHDS Health 自己健康管理",
-        sub:"4モード · 各10指標 · 定量スコア + 可視化（ヒート + レーダー）",
-        uploadTitle:"写真アップロード・分析選択",
-        uploadHint:"明るい環境で正面を鮮明に。全身写真は任意です（デモ）。",
-        photoLabel:"写真をアップロード（明るい環境）",
-        photoSmall:"撮影またはアルバムから選択",
-        modeLabel:"分析モード",
-        modeHealth:"1. 健康管理",
-        modeSkin:"2. 肌管理",
-        modeFace:"3. 顔相分析",
-        modePsy:"4. 心理分析",
-        age:"年齢",
-        height:"身長（cm）",
-        weight:"体重（kg）",
-        waist:"ウエスト（inch）",
-        submit:"分析開始",
-        overall:"総合",
-        modeNow:"モード：",
-        heatTitle:"人体ヒートゾーン",
-        heatHint:"発光＋呼吸パルス（デモ）",
-        radarTitle:"レーダーチャート",
-        radarHint:"発光アニメ（デモ）",
-        note:"正式版デモ構成：バックエンドが返さない場合は既定値で表示します。",
-        itemsTitle:"10指標（60字以内）",
-      },
-      kr:{
-        title:"VHDS Health 자기 건강관리",
-        sub:"4 모드 · 모드당 10 지표 · 점수 + 시각화(히트 + 레이더)",
-        uploadTitle:"사진 업로드 및 분석 선택",
-        uploadHint:"밝은 환경에서 정면이 선명하게. 전신 사진은 선택(데모).",
-        photoLabel:"사진 업로드(밝은 환경)",
-        photoSmall:"촬영 또는 앨범에서 선택",
-        modeLabel:"모드 선택",
-        modeHealth:"1. 건강 관리",
-        modeSkin:"2. 피부 관리",
-        modeFace:"3. 관상 분석",
-        modePsy:"4. 심리 분석",
-        age:"나이",
-        height:"키(cm)",
-        weight:"몸무게(kg)",
-        waist:"허리(inch)",
-        submit:"분석 시작",
-        overall:"총점",
-        modeNow:"모드:",
-        heatTitle:"인체 열구역",
-        heatHint:"발광 + 호흡 펄스(데모)",
-        radarTitle:"레이더 차트",
-        radarHint:"발광 애니메이션(데모)",
-        note:"정식 데모 구조: 백엔드 점수가 없으면 기본값으로 표시됩니다.",
-        itemsTitle:"10 지표(60자 이내)",
-      }
-    };
+
+
+<script>
+
+// ===== Language dictionary (UI only). 4 languages. =====
+const I18N = {
+
+  zh:{
+    title:"VHDS Health 自我健康管理",
+    sub:"四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）",
+    uploadTitle:"上傳照片與選擇分析",
+    uploadHint:"建議光線充足、正面清晰。若未上傳全身照，仍可執行量化評估與視覺化展示。",
+    photoLabel:"上傳照片（建議：光線充足）",
+    photoSmall:"手機可直接拍照或選擇相簿",
+    modeLabel:"選擇分析模式",
+    modeHealth:"1. 健康管理",
+    modeSkin:"2. 肌膚管理",
+    modeFace:"3. 面相學分析",
+    modePsy:"4. 心理學分析",
+    age:"年齡（歲）",
+    height:"身高（cm）",
+    weight:"體重（kg）",
+    waist:"腰圍（吋）",
+    submit:"開始分析",
+    overall:"總評分",
+    modeNow:"模式：",
+    heatTitle:"人體熱區圖",
+    heatHint:"發光 + 呼吸脈動（展示用）",
+    radarTitle:"雷達圖",
+    radarHint:"發光動畫（展示用）",
+    note:"本頁為展示版架構：若後端未回傳，會使用示範值顯示。",
+    itemsTitle:"10 指標（60字內說明）",
+  },
+
+  en:{
+    title:"VHDS Health Self-Management",
+    sub:"4 modes · 10 metrics each · Quant scores + Visuals",
+    uploadTitle:"Upload Photo & Select Mode",
+    uploadHint:"Use clear photo under good lighting",
+    photoLabel:"Upload Photo",
+    photoSmall:"Take photo or select album",
+    modeLabel:"Select Mode",
+    modeHealth:"1. Health",
+    modeSkin:"2. Skin",
+    modeFace:"3. Face",
+    modePsy:"4. Psychology",
+    age:"Age",
+    height:"Height (cm)",
+    weight:"Weight (kg)",
+    waist:"Waist",
+    submit:"Analyze",
+    overall:"Overall",
+    modeNow:"Mode:",
+    heatTitle:"Body Heat Zones",
+    radarTitle:"Radar Chart",
+    itemsTitle:"10 Metrics",
+  },
+
+  jp:{
+    title:"VHDS Health 自己健康管理",
+    sub:"4モード · 各10指標",
+    uploadTitle:"写真アップロード",
+    modeLabel:"モード選択",
+    submit:"分析開始",
+    overall:"総合",
+    heatTitle:"ヒートゾーン",
+    radarTitle:"レーダー",
+    itemsTitle:"10指標",
+  },
+
+  kr:{
+    title:"VHDS Health 자기 건강관리",
+    sub:"4 모드 · 각 10 지표",
+    uploadTitle:"사진 업로드",
+    modeLabel:"모드 선택",
+    submit:"분석 시작",
+    overall:"총점",
+    heatTitle:"열 구역",
+    radarTitle:"레이더",
+    itemsTitle:"10 지표",
+  }
+
+};
+
+</script>
 
     // ===== Default demo data (when backend doesn’t return) =====
     function demoHeat(){
