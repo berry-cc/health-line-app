@@ -11,7 +11,7 @@
   const FPS = 12;                 // performance throttle
   const BASE_R = 6;              // base dot radius
   const PULSE_R = 12;              // pulse radius add
-  const GLOW_BLUR = 8;           // glow softness
+  const GLOW_BLUR =12;           // glow softness
   const LABEL_FONT = 12;          // label font size
   const VALUE_FONT = 13;          // value font size
   const LINE_W = 1.2;             // stroke width
