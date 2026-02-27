@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VHDS Submit Test</title>
+<title>VHDS V3</title>
 <style>
   body{background:#0b1020;color:#fff;font-family:sans-serif;padding:20px}
   input,select{padding:10px;margin:6px 0;width:100%;max-width:420px}
@@ -15,19 +15,33 @@
 </head>
 <body>
 
-<h2>VHDS - 表單送出測試</h2>
+<h2>VHDS V3 分析</h2>
 
 <form id="vhdsForm" method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data">
+
   <label>年齡
-    <input name="age" id="age" type="number">
+    <input name="age" id="age" type="number" value="{{ age or '' }}">
+  </label>
+
+  <label>身高
+    <input name="height" id="height" type="number" value="{{ height or '' }}">
+  </label>
+
+  <label>體重
+    <input name="weight" id="weight" type="number" value="{{ weight or '' }}">
+  </label>
+
+  <label>腰圍
+    <input name="waist" id="waist" type="number" value="{{ waist or '' }}">
   </label>
 
   <label>模式
+    {% set ms = mode_selected or (result.mode if result) or 'health' %}
     <select name="mode" id="mode">
-      <option value="health">健康</option>
-      <option value="skin">肌膚</option>
-      <option value="face">面相</option>
-      <option value="psy">心理</option>
+      <option value="health" {% if ms=='health' %}selected{% endif %}>健康</option>
+      <option value="skin"   {% if ms=='skin' %}selected{% endif %}>肌膚</option>
+      <option value="face"   {% if ms=='face' %}selected{% endif %}>面相</option>
+      <option value="psy"    {% if ms=='psy' %}selected{% endif %}>心理</option>
     </select>
   </label>
 
@@ -37,48 +51,91 @@
 
   <div id="photoPreview"></div>
 
-  <!-- ✅ 用 input submit，iOS 最穩 -->
-  <input id="submitBtn" class="btn" type="submit" value="開始分析（送出 /analyze）">
+  <!-- iOS 最穩：用 input submit -->
+  <input id="submitBtn" class="btn" type="submit" value="開始分析">
+
 </form>
 
-<div id="debug" class="msg">狀態：頁面載入完成</div>
+<div id="debug" class="msg">狀態：頁面載入完成（若你按分析後這行會更新）</div>
 
 <hr>
 
 {% if result %}
-  <h3>✅ 後端已回傳 result</h3>
-  <div class="msg">{{ result | tojson }}</div>
+  <h3>總分: {{result.overall}}</h3>
+  <canvas id="radarCanvas" width="400" height="400"></canvas>
+
+  {% for item in result.items %}
+    <div>{{item.name}} : {{item.score}}</div>
+  {% endfor %}
 {% endif %}
 
 <script>
-  // 1) 縮圖預覽（你已經成功）
-  document.getElementById("photos").addEventListener("change", function(e){
-    const preview = document.getElementById("photoPreview");
-    preview.innerHTML = "";
-    for (const file of e.target.files) {
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      preview.appendChild(img);
-    }
-  });
-
-  // 2) 送出提示：按下送出一定會看到這句（若看不到=根本沒 submit）
   const form = document.getElementById("vhdsForm");
   const debug = document.getElementById("debug");
-  form.addEventListener("submit", function(){
-    debug.textContent = "狀態：已觸發 submit（代表按鈕有反應），正在送出到 /analyze ...";
+  const photosInput = document.getElementById("photos");
+  const preview = document.getElementById("photoPreview");
+
+  // =========================
+  // (1) 縮圖：選檔即顯示 + 存到 sessionStorage（為了重新載入後還能顯示）
+  // =========================
+  async function filesToThumbDataURLs(files){
+    const arr = [];
+    for (const f of files) {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(f);
+      });
+      arr.push(dataUrl);
+    }
+    return arr;
+  }
+
+  function renderThumbs(dataUrls){
+    preview.innerHTML = "";
+    for (const src of dataUrls) {
+      const img = document.createElement("img");
+      img.src = src;
+      preview.appendChild(img);
+    }
+  }
+
+  photosInput.addEventListener("change", async (e) => {
+    const files = [...e.target.files].slice(0, 10);
+    const thumbs = await filesToThumbDataURLs(files);
+    sessionStorage.setItem("vhds_thumbs", JSON.stringify(thumbs));
+    renderThumbs(thumbs);
   });
 
-  // 3) 路由存在性檢查：/analyze 用 GET 測試會得到 405（正常）
-  (async function(){
+  // =========================
+  // (2) 頁面載入時：把上次的縮圖畫回來
+  // =========================
+  (function restoreThumbs(){
+    const raw = sessionStorage.getItem("vhds_thumbs");
+    if(!raw) return;
     try{
-      const url = form.getAttribute("action");
-      const res = await fetch(url, { method: "GET" });
-      debug.textContent += "\n偵測：/analyze GET 狀態碼 = " + res.status + "（405=正常，代表路由存在）";
-    }catch(e){
-      debug.textContent += "\n偵測：fetch 失敗 = " + String(e);
-    }
+      const thumbs = JSON.parse(raw);
+      if(Array.isArray(thumbs) && thumbs.length) renderThumbs(thumbs);
+    }catch(_){}
   })();
+
+  // =========================
+  // (3) 送出提示：讓你看得出「有送出」
+  // =========================
+  form.addEventListener("submit", function(){
+    debug.textContent = "狀態：已送出 /analyze，等待後端回傳結果...（頁面會重新載入）";
+  });
+</script>
+
+<script src="{{ url_for('static', filename='radar.js') }}"></script>
+<script>
+{% if result %}
+  const items = {{ result.items | tojson }};
+  if (window.VHDSRadar && typeof VHDSRadar.start === "function") {
+    VHDSRadar.start("radarCanvas", items);
+  }
+{% endif %}
 </script>
 
 </body>
