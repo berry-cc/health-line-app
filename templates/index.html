@@ -853,6 +853,17 @@ points.forEach(([key, px, py]) => {
     // showResult(demoResult(document.getElementById("mode").value), demoHeat(), false);
   });
   </script>
+<!-- VHDS data bridge -->
+<script>
+window.__VHDS__ = {
+    result: {{ result|tojson if result else "null" }},
+    heat_scores: {{ heat_scores|tojson if heat_scores else "null" }},
+    photo_previews: {{ photo_previews|tojson if photo_previews else "[]" }},
+    form: {{ form|tojson if form else "{}" }}
+};
+</script>
+
+<script src="/static/heatmap.js"></script>  
 </body>
 </html>
         
