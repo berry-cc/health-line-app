@@ -100,7 +100,7 @@ def analyze():
 
     mode = request.form.get("mode", "health").strip()
 
-    photo = request.files.get("photo")
+    photo = request.files.getlist("photos")
 
     if not photo:
         return render_template(
