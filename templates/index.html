@@ -399,9 +399,9 @@
 
 <script>
 window.__VHDS__ = {
-    result: {{ result|tojson if result else "null" }},
-    heat_scores: {{ heat_scores|tojson if heat_scores else "{}" }},
-    photo_preview: {{ photo_preview|tojson if photo_preview else "null" }}
+    result: {{ result|tojson if result else null }},
+    heat_scores: {{ heat_scores|tojson if heat_scores else {} }},
+    photo_preview: {{ photo_preview|tojson if photo_preview else null }}
 };
 </script>
 
