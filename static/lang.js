@@ -1,11 +1,7 @@
-// VHDS_V3/js/lang.js
-// 真正多語言：提供 UI 與動態文字翻譯（zh/en/ja/ko）
-// 使用：VHDSLang.t("key") / VHDSLang.get("中文原文")
-
+// static/lang.js
 (function (global) {
   const DICT = {
     zh: {
-      // UI
       "ui.input": "輸入資料",
       "ui.age": "年齡",
       "ui.height": "身高 (cm)",
@@ -28,27 +24,23 @@
       "ui.exec": "Executive Summary",
       "ui.metrics": "十大指標（名稱 + 分數 + 說明）",
 
-      // Modes
       "mode.health": "健康",
       "mode.skin": "肌膚",
       "mode.fortune": "面相運勢",
       "mode.psy": "人際心理",
 
-      // Status labels
       "label.excellent": "卓越狀態",
       "label.optimize": "優化提升期",
       "label.improvable": "可改善區",
       "label.warning": "警示區",
       "label.imbalanced": "失衡區",
 
-      // Today state
       "today.high": "高效率日",
       "today.recoverGood": "恢復良好日",
       "today.improve": "可提升日",
       "today.needRecover": "需恢復日",
       "today.adjust": "需調整日",
 
-      // Common strings
       "text.confidence": "分析信心 {pct}%",
       "text.windowDays": "最佳提升期剩餘 {days} 天",
       "text.expectedLift": "預期提升：{lift}",
@@ -56,16 +48,9 @@
       "text.trend.down": "↓ {d}（較上次）",
       "text.trend.flat": "—（首次/持平）",
 
-      // Alerts
       "alert.needPhoto": "請先上傳至少 1 張清晰人像照片。",
       "alert.photoInvalid": "照片不符合規定：請上傳清晰人像照片（需可偵測到人臉）。",
-      "alert.detectorUnavailable": "無法偵測人臉：需要瀏覽器支援或放入 face-api 模型檔（./models）。請先用可支援的瀏覽器或補齊模型檔。",
-
-      // Top3 labels
-      "top.score": "狀況指數：{n}",
-      "top.reason": "原因：{s}",
-      "top.suggest": "建議：{s}",
-      "top.lift": "預期改善：+{n}%"
+      "alert.detectorUnavailable": "無法偵測人臉：請使用支援的瀏覽器，或放入 face-api 模型檔（/static/models）。",
     },
 
     en: {
@@ -117,12 +102,7 @@
 
       "alert.needPhoto": "Please upload at least 1 clear portrait photo.",
       "alert.photoInvalid": "Invalid photo: please upload a clear portrait (a detectable face is required).",
-      "alert.detectorUnavailable": "Face detection unavailable: browser support or face-api models (./models) required.",
-
-      "top.score": "Score: {n}",
-      "top.reason": "Why: {s}",
-      "top.suggest": "Action: {s}",
-      "top.lift": "Expected: +{n}%"
+      "alert.detectorUnavailable": "Face detection unavailable: use a supported browser or add face-api models in /static/models.",
     },
 
     ja: {
@@ -174,12 +154,7 @@
 
       "alert.needPhoto": "顔がはっきり写った写真を1枚以上アップロードしてください。",
       "alert.photoInvalid": "写真が不適切です：顔が検出できる写真をアップロードしてください。",
-      "alert.detectorUnavailable": "顔検出が利用できません：ブラウザ対応または models（./models）が必要です。",
-
-      "top.score": "指数：{n}",
-      "top.reason": "理由：{s}",
-      "top.suggest": "提案：{s}",
-      "top.lift": "見込み：+{n}%"
+      "alert.detectorUnavailable": "顔検出が利用できません：/static/models にモデルが必要です。",
     },
 
     ko: {
@@ -231,60 +206,29 @@
 
       "alert.needPhoto": "선명한 인물 사진을 최소 1장 업로드하세요.",
       "alert.photoInvalid": "사진이 부적절합니다: 얼굴이 감지되는 인물 사진이 필요합니다.",
-      "alert.detectorUnavailable": "얼굴 감지를 사용할 수 없습니다: 브라우저 지원 또는 models(./models)가 필요합니다.",
-
-      "top.score": "지수: {n}",
-      "top.reason": "원인: {s}",
-      "top.suggest": "제안: {s}",
-      "top.lift": "예상: +{n}%"
-    }
+      "alert.detectorUnavailable": "얼굴 감지를 사용할 수 없습니다: /static/models 에 모델이 필요합니다.",
+    },
   };
 
-  function getLang() {
+  function safeGetStateLang() {
     try {
-      const s = global.VHDSState?.get?.();
-      return s?.lang || "zh";
+      return global.VHDSState?.get?.().lang || "zh";
     } catch {
       return "zh";
     }
   }
 
   function fmt(template, vars = {}) {
-    return String(template).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
+    return String(template).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
   }
 
   function t(key, vars) {
-    const lang = getLang();
+    const lang = safeGetStateLang();
     const table = DICT[lang] || DICT.zh;
-    const zh = DICT.zh;
-    const raw = table[key] ?? zh[key] ?? key;
+    const base = DICT.zh;
+    const raw = table[key] ?? base[key] ?? key;
     return fmt(raw, vars);
   }
 
-  // 以「中文原文」做 lookup（動態字串渲染最省事）
-  function get(text, vars) {
-    const lang = getLang();
-    if (lang === "zh") return fmt(text, vars);
-
-    // 建立 zh->target 的反查表（只做一次）
-    const cacheKey = "__vhds_lang_rev__";
-    global[cacheKey] ||= {};
-    global[cacheKey][lang] ||= (function buildRev() {
-      const rev = {};
-      const zh = DICT.zh;
-      const table = DICT[lang] || {};
-      Object.keys(zh).forEach((k) => {
-        const zhVal = zh[k];
-        const toVal = table[k];
-        if (zhVal && toVal) rev[zhVal] = toVal;
-      });
-      return rev;
-    })();
-
-    const rev = global[cacheKey][lang];
-    const mapped = rev[text];
-    return fmt(mapped ?? text, vars);
-  }
-
-  global.VHDSLang = { t, get, _DICT: DICT };
+  global.VHDSLang = { t, _DICT: DICT };
 })(window);
