@@ -184,19 +184,19 @@
         <div class="grid4" style="margin-top:12px">
           <div>
             <label id="t_age" for="age">年齡（歲）</label>
-            <input id="age" name="age" inputmode="numeric" placeholder="例如 50"/>
+            <input id="ageInput" name="age" type="number" inputmode="numeric" value="{{ age or '' }}" placeholder="例如 50"/>
           </div>
           <div>
             <label id="t_height" for="height">身高（cm）</label>
-            <input id="height" name="height" inputmode="numeric" placeholder="例如 170"/>
+            <input id="heightInput" name="height" type="number" inputmode="numeric" value="{{ height or '' }}" placeholder="例如 170"/>
           </div>
           <div>
             <label id="t_weight" for="weight">體重（kg）</label>
-            <input id="weight" name="weight" inputmode="numeric" placeholder="例如 65"/>
+            <input id="weightInput" name="weight" type="number" inputmode="numeric" value="{{ weight or '' }}" placeholder="例如 65"/>
           </div>
           <div>
             <label id="t_waist" for="waist">腰圍（吋）</label>
-            <input id="waist" name="waist" inputmode="numeric" placeholder="例如 34"/>
+            <input id="waistInput" name="waist" type="number" inputmode="numeric" value="{{ waist or '' }}" placeholder="例如 34"/>
           </div>
         </div>
 
@@ -486,6 +486,27 @@ renderAll();
 
 // 保存表單（避免你按分析後又覺得被清空）
 form.addEventListener("submit", saveForm);
+</script>
+
+</body>
+</html>
+
+<script src="/static/heatmap.js"></script>
+
+<!-- VHDS DATA BRIDGE -->
+<script>
+window.VHDS = {
+    result: {{ result | tojson if result else 'null' }},
+    heat_scores: {{ heat_scores | tojson if heat_scores else 'null' }},
+    photo_previews: {{ photo_previews | tojson if photo_previews else '[]' }},
+    form: {
+        age: "{{ age or '' }}",
+        height: "{{ height or '' }}",
+        weight: "{{ weight or '' }}",
+        waist: "{{ waist or '' }}",
+        mode: "{{ mode or '' }}"
+    }
+};
 </script>
 
 </body>
