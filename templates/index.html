@@ -569,10 +569,35 @@
     ctx.lineWidth = 2;
     ctx.beginPath();
     pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+
+ctx.restore();   // ✅ 必須先 restore glow 狀態
+
+// ===== 顯示文字與分數 =====
+ctx.save();
+
+ctx.fillStyle = "#ffffff";
+ctx.font = "12px Arial";
+ctx.textAlign = "center";
+
+for(let i=0;i<N;i++){
+
+    const angle = (-Math.PI/2) + i*(2*Math.PI/N);
+
+    const labelRadius = R + 32;
+
+    const lx = cx + labelRadius * Math.cos(angle);
+    const ly = cy + labelRadius * Math.sin(angle);
+
+    const name = list[i]?.name || ("指標"+(i+1));
+    const score = vals[i] ?? 0;
+
+    ctx.fillText(name + " " + score, lx, ly);
+}
+
+ctx.restore();
   }
 
   // heatmap with breathing pulse
