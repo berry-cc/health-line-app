@@ -1,38 +1,56 @@
 <!doctype html>
-<html>
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VHDS V3</title>
 </head>
 
 <body style="background:#0b1020;color:white;font-family:sans-serif">
 
-<h2>VHDS V3 分析</h2>
+<h2>VHDS V3 分析系統</h2>
 
+<!-- ===== 表單 ===== -->
 <form method="POST" action="/analyze" enctype="multipart/form-data">
 
 年齡:
-<input name="age" value="{{age}}"><br><br>
+<input name="age" value="{{age}}">
+<br><br>
 
 身高:
-<input name="height" value="{{height}}"><br><br>
+<input name="height" value="{{height}}">
+<br><br>
 
 體重:
-<input name="weight" value="{{weight}}"><br><br>
+<input name="weight" value="{{weight}}">
+<br><br>
 
 腰圍:
-<input name="waist" value="{{waist}}"><br><br>
+<input name="waist" value="{{waist}}">
+<br><br>
 
 模式:
 <select name="mode">
 
-<option value="health" {% if mode_selected=="health" %}selected{% endif %}>健康</option>
+<option value="health"
+{% if mode_selected=="health" %}selected{% endif %}>
+健康
+</option>
 
-<option value="skin" {% if mode_selected=="skin" %}selected{% endif %}>肌膚</option>
+<option value="skin"
+{% if mode_selected=="skin" %}selected{% endif %}>
+肌膚
+</option>
 
-<option value="face" {% if mode_selected=="face" %}selected{% endif %}>面相</option>
+<option value="face"
+{% if mode_selected=="face" %}selected{% endif %}>
+面相
+</option>
 
-<option value="psy" {% if mode_selected=="psy" %}selected{% endif %}>心理</option>
+<option value="psy"
+{% if mode_selected=="psy" %}selected{% endif %}>
+心理
+</option>
 
 </select>
 
@@ -41,27 +59,31 @@
 上傳照片:
 <input type="file" name="photo" id="photos" multiple>
 
-<div id="photoPreview"></div>
+<div id="preview"></div>
 
 <br>
 
-<button type="submit">開始分析</button>
+<button type="submit">
+開始分析
+</button>
 
 </form>
 
 <hr>
 
-<!-- 關鍵：顯示結果 -->
+<!-- ===== 顯示結果 ===== -->
 
 {% if result %}
 
-<h3>總分: {{result.overall}}</h3>
+<h3>
+總分: {{result.overall}}
+</h3>
 
 {% for item in result.items %}
 
 <div>
 
-{{item.name}} ： {{item.score}}
+{{item.name}} : {{item.score}}
 
 </div>
 
@@ -69,21 +91,24 @@
 
 {% endif %}
 
+<!-- ===== 縮圖預覽 ===== -->
 <script>
 
-document.getElementById("photos").addEventListener("change",function(e){
+document.getElementById("photos").addEventListener("change", function(e){
 
-const preview=document.getElementById("photoPreview");
+const preview = document.getElementById("preview");
 
-preview.innerHTML="";
+preview.innerHTML = "";
 
 for(const file of e.target.files){
 
-const img=document.createElement("img");
+const img = document.createElement("img");
 
-img.src=URL.createObjectURL(file);
+img.src = URL.createObjectURL(file);
 
-img.style.width="80px";
+img.style.width = "80px";
+
+img.style.margin = "5px";
 
 preview.appendChild(img);
 
