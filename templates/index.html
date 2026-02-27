@@ -465,6 +465,7 @@ function renderAll(){
     itemsEl.appendChild(div);
   });
 
+  renderRadarFromVHDS();
   // radar + heat
   if(window.VHDSRadar && window.VHDSRadar.start){
     window.VHDSRadar.start("radarCanvas", r.items||[]);
