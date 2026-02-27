@@ -77,7 +77,7 @@
   function setupCanvas(canvas) {
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const cssW = canvas.clientWidth || Number(canvas.getAttribute("width")) || 320;
-    const cssH = canvas.clientHeight || Number(canvas.getAttribute("height")) || 360;
+    const cssH = canvas.clientHeight || Number(canvas.getAttribute("height")) || 520;
 
     canvas.width = Math.floor(cssW * dpr);
     canvas.height = Math.floor(cssH * dpr);
