@@ -1,135 +1,97 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VHDS V3 Debug</title>
-
-<style>
-  body{
-    background:#0b1020;
-    color:#fff;
-    font-family:sans-serif;
-    padding:20px;
-  }
-  input,select{
-    padding:10px;
-    margin:6px 0;
-    width:100%;
-    max-width:420px;
-  }
-  button{
-    background:#22c55e;
-    color:#fff;
-    border:none;
-    padding:12px;
-    border-radius:10px;
-    font-weight:900;
-    cursor:pointer;
-    width:200px;
-  }
-  #photoPreview{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin:10px 0;
-  }
-  #photoPreview img{
-    width:80px;
-    height:80px;
-    object-fit:cover;
-    border-radius:8px;
-    border:1px solid rgba(255,255,255,.2);
-  }
-  .box{
-    margin-top:12px;
-    padding:10px;
-    border:1px solid rgba(255,255,255,.2);
-    border-radius:10px;
-    max-width:720px;
-    white-space:pre-wrap;
-  }
-</style>
+<title>VHDS V3</title>
 </head>
 
-<body>
+<body style="background:#0b1020;color:white;font-family:sans-serif">
 
-<h2>VHDS V3 分析（Debug 版本）</h2>
+<h2>VHDS V3 分析</h2>
 
-<!-- ✅ 這行可以看到後端到底回什麼 -->
-<div class="box">
-Server 回傳訊息：
-{{ server_msg or "（尚未分析）" }}
-</div>
+<form method="POST" action="/analyze" enctype="multipart/form-data">
 
-<form method="POST"
-      action="{{ url_for('analyze') }}"
-      enctype="multipart/form-data">
+年齡:
+<input name="age" value="{{age}}"><br><br>
 
-  <label>年齡
-    <input name="age" type="number" value="{{ age or '' }}">
-  </label>
+身高:
+<input name="height" value="{{height}}"><br><br>
 
-  <label>身高
-    <input name="height" type="number" value="{{ height or '' }}">
-  </label>
+體重:
+<input name="weight" value="{{weight}}"><br><br>
 
-  <label>體重
-    <input name="weight" type="number" value="{{ weight or '' }}">
-  </label>
+腰圍:
+<input name="waist" value="{{waist}}"><br><br>
 
-  <label>腰圍
-    <input name="waist" type="number" value="{{ waist or '' }}">
-  </label>
+模式:
+<select name="mode">
 
-  <label>模式
-    {% set ms = mode_selected or 'health' %}
-    <select name="mode">
-      <option value="health" {% if ms=='health' %}selected{% endif %}>健康</option>
-      <option value="skin" {% if ms=='skin' %}selected{% endif %}>肌膚</option>
-      <option value="face" {% if ms=='face' %}selected{% endif %}>面相</option>
-      <option value="psy" {% if ms=='psy' %}selected{% endif %}>心理</option>
-    </select>
-  </label>
+<option value="health" {% if mode_selected=="health" %}selected{% endif %}>健康</option>
 
-  <label>上傳照片
-    <input type="file" name="photo" id="photos" accept="image/*" multiple>
-  </label>
+<option value="skin" {% if mode_selected=="skin" %}selected{% endif %}>肌膚</option>
 
-  <div id="photoPreview"></div>
+<option value="face" {% if mode_selected=="face" %}selected{% endif %}>面相</option>
 
-  <br>
-  <button type="submit">開始分析</button>
+<option value="psy" {% if mode_selected=="psy" %}selected{% endif %}>心理</option>
+
+</select>
+
+<br><br>
+
+上傳照片:
+<input type="file" name="photo" id="photos" multiple>
+
+<div id="photoPreview"></div>
+
+<br>
+
+<button type="submit">開始分析</button>
 
 </form>
 
 <hr>
 
+<!-- 關鍵：顯示結果 -->
+
 {% if result %}
 
-<h3>✅ 總分: {{ result.overall }}</h3>
+<h3>總分: {{result.overall}}</h3>
 
 {% for item in result.items %}
-  <div>
-    {{ item.name }} ： {{ item.score }}
-  </div>
+
+<div>
+
+{{item.name}} ： {{item.score}}
+
+</div>
+
 {% endfor %}
 
 {% endif %}
 
 <script>
-  // 縮圖預覽
-  document.getElementById("photos").addEventListener("change", function(e){
-    const preview = document.getElementById("photoPreview");
-    preview.innerHTML = "";
-    for (const file of e.target.files) {
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      preview.appendChild(img);
-    }
-  });
+
+document.getElementById("photos").addEventListener("change",function(e){
+
+const preview=document.getElementById("photoPreview");
+
+preview.innerHTML="";
+
+for(const file of e.target.files){
+
+const img=document.createElement("img");
+
+img.src=URL.createObjectURL(file);
+
+img.style.width="80px";
+
+preview.appendChild(img);
+
+}
+
+});
+
 </script>
 
 </body>
 </html>
-
