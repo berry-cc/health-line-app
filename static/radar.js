@@ -2,7 +2,7 @@
 (function(){
   const FPS = 12;
   const GLOW_BLUR = 12;
-  const LABEL_SIZE = 18;
+  const LABEL_SIZE = 24;
 
   function setupCanvas(canvas){
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
