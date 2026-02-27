@@ -1,586 +1,339 @@
+<!-- templates/index.html  （V3 版本：可直接整份覆蓋貼上） -->
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>VHDS Health 自主健康管理</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VHDS V3</title>
+
+  <!-- 你若已有自己的 CSS，可改成載入你原本的檔案 -->
   <style>
     :root{
-      --bg:#0b1220;
-      --card:rgba(255,255,255,.06);
-      --card2:rgba(255,255,255,.08);
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.7);
-      --line:rgba(255,255,255,.10);
-      --glow:rgba(80,170,255,.9);
-      --glow2:rgba(120,220,255,.55);
-      --good:#3fe0a5;
-      --warn:#ffcc66;
-      --bad:#ff6b6b;
+      --bg:#0b1020; --text:#e5e7eb; --muted:#9ca3af; --line:rgba(255,255,255,.10);
+      --card:rgba(255,255,255,.05); --shadow:0 10px 30px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Noto Sans JP","Noto Sans KR",Arial;
-      background:radial-gradient(1200px 700px at 20% 10%, rgba(80,170,255,.18), transparent 55%),
-                 radial-gradient(900px 600px at 80% 10%, rgba(160,120,255,.12), transparent 50%),
-                 var(--bg);
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Helvetica Neue",Arial;
+      background: radial-gradient(1200px 700px at 10% 5%, rgba(34,197,94,.16), transparent 60%),
+                  radial-gradient(900px 600px at 80% 10%, rgba(59,130,246,.16), transparent 55%),
+                  var(--bg);
       color:var(--text);
     }
-    .wrap{max-width:980px; margin:0 auto; padding:18px 14px 60px}
-    .top{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px;
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px;
+      border-bottom:1px solid var(--line);
+      backdrop-filter: blur(12px);
+      background: rgba(11,16,32,.55);
     }
-    .title{font-size:20px; font-weight:800; letter-spacing:.2px}
-    .sub{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.45}
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .row{display:grid; grid-template-columns:1fr; gap:12px}
-    @media (min-width:900px){ .row{grid-template-columns: 1.05fr .95fr} }
-    .glassBtns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    .brand{font-weight:900; letter-spacing:.4px}
+    .ver{font-weight:700; color:var(--muted); margin-left:6px; font-size:.9em}
+    .lang{display:flex; gap:8px}
     .glass{
-      border:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
       color:var(--text);
-      border-radius:12px;
       padding:8px 10px;
-      cursor:pointer;
-      font-size:12px;
-      box-shadow: 0 8px 18px rgba(0,0,0,.22);
-      position:relative;
-      overflow:hidden;
-    }
-    .glass:before{
-      content:"";
-      position:absolute; inset:-40% -30%;
-      background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 40%);
-      transform:rotate(12deg);
-      opacity:.7;
-      pointer-events:none;
-    }
-    .glass.active{border-color:rgba(120,220,255,.55); box-shadow:0 10px 22px rgba(80,170,255,.18)}
-    label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
-    input, select, textarea{
-      width:100%;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      color:var(--text);
       border-radius:12px;
-      padding:10px 10px;
-      outline:none;
-      font-size:14px;
-    }
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .grid4{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    @media(min-width:600px){ .grid4{grid-template-columns:repeat(4,1fr)}}
-    .btnPrimary{
-      width:100%;
-      border:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(180deg, rgba(120,220,255,.28), rgba(255,255,255,.08));
-      color:var(--text);
-      border-radius:14px;
-      padding:12px 12px;
-      font-weight:800;
       cursor:pointer;
-      box-shadow:0 10px 24px rgba(80,170,255,.16);
-      position:relative;
-      overflow:hidden;
+      font-weight:800;
     }
-    .btnPrimary:before{
-      content:"";
-      position:absolute; inset:-40% -30%;
-      background:radial-gradient(circle at 20% 20%, rgba(255,255,255,.50), transparent 42%);
-      transform:rotate(10deg);
-      opacity:.7;
-      pointer-events:none;
+    .glass.active{outline:2px solid rgba(34,197,94,.35)}
+    .container{max-width:1080px; margin:18px auto; padding:0 14px 30px}
+    .card{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:18px;
+      margin:14px 0;
     }
-    .hint{font-size:12px; color:var(--muted); line-height:1.5}
-    .preview{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    h2{margin:0 0 14px; font-size:20px}
+    .grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+    @media (max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+    .field span{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    .field input{
+      width:100%; padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text); outline:none;
+    }
+    .row{display:flex; gap:12px; align-items:flex-start; margin-top:14px}
+    @media (max-width:900px){ .row{flex-direction:column} }
+    .mode label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    .mode select{
+      padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      min-width:220px;
+    }
+    .uploader{flex:1}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 12px; border-radius:12px;
+      border:1px dashed rgba(255,255,255,.22);
+      background: rgba(255,255,255,.04);
+      cursor:pointer; user-select:none;
+    }
+    .btn input{display:none}
+    .hint{margin-top:8px; color:var(--muted); font-size:12px}
+    .preview{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
     .thumb{
-      width:62px; height:62px; border-radius:12px; object-fit:cover;
-      border:1px solid rgba(255,255,255,.14);
+      width:88px; height:88px; border-radius:14px; border:1px solid var(--line);
+      object-fit:cover; background:#111827;
     }
-    .secTitle{font-size:14px; font-weight:800; margin:2px 0 8px}
-    .small{font-size:12px; color:var(--muted)}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);
-      font-size:12px;
+    .actions{justify-content:flex-end}
+    .primary,.ghost{
+      padding:12px 14px; border-radius:14px; cursor:pointer; font-weight:900;
+      border:1px solid var(--line); background: rgba(255,255,255,.03); color:var(--text);
     }
-    .scoreBig{
-      font-size:34px; font-weight:900; letter-spacing:.6px; line-height:1;
+    .primary{border-color:rgba(34,197,94,.55); background: rgba(34,197,94,.12)}
+    .alert{
+      margin-top:12px; padding:12px 12px; border-radius:14px;
+      border:1px solid rgba(239,68,68,.45);
+      background: rgba(239,68,68,.10);
+      color:#fecaca; font-weight:800;
     }
-    .items{display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px}
-    @media(min-width:900px){ .items{grid-template-columns:1fr 1fr} }
-    .item{
-      padding:12px; border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.05);
+    .hidden{display:none !important}
+    .muted{color:var(--muted); font-size:12px}
+
+    /* Summary (V3) */
+    .summaryTop{display:grid; grid-template-columns: 1.05fr .95fr; gap:14px}
+    @media (max-width:900px){ .summaryTop{grid-template-columns:1fr} }
+    .box{padding:14px; border:1px solid var(--line); border-radius:16px; background:rgba(0,0,0,.10)}
+    .kpiTitle{font-size:12px; color:var(--muted); margin-bottom:8px}
+    .gauge{position:relative; height:190px}
+    .gaugeArc{
+      position:absolute; left:18px; right:18px; top:10px; height:140px;
+      border-radius:999px 999px 14px 14px;
+      background: conic-gradient(from 180deg,
+        rgba(239,68,68,.95) 0deg 40deg,
+        rgba(245,158,11,.95) 40deg 95deg,
+        rgba(163,230,53,.95) 95deg 135deg,
+        rgba(16,185,129,.95) 135deg 180deg);
+      mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 100%);
+      -webkit-mask: radial-gradient(circle at 50% 100%, transparent 0 55%, #000 56% 100%);
     }
-    .itemTop{display:flex; justify-content:space-between; gap:10px; align-items:center}
-    .itemName{font-weight:800; font-size:13px}
-    .itemScore{font-weight:900; font-size:13px; color:rgba(120,220,255,.95)}
-    .itemDesc{margin-top:6px; font-size:12px; color:var(--muted); line-height:1.45}
-    canvas{width:100%; height:auto; display:block}
-    /* 讓熱區圖容器更像醫療級全息 UI */
-#heatCanvas {
-  width: 100%;
-  height: 360px;
-  border-radius: 14px;
-  display: block;
-  background: radial-gradient(circle at 50% 30%, rgba(46,240,255,.12), rgba(0,0,0,0) 55%),
-              linear-gradient(180deg, rgba(10,20,45,.65), rgba(5,10,22,.85));
-  box-shadow: 0 0 0 1px rgba(46,240,255,.18) inset,
-              0 10px 30px rgba(0,0,0,.35);
-}
-    .twoCanv{display:grid; grid-template-columns:1fr; gap:12px}
-    @media(min-width:900px){ .twoCanv{grid-template-columns:1fr 1fr} }
-    .error{color:#ffb3b3; font-size:12px; margin-top:8px}
+    .needle{
+      position:absolute; left:50%; top:95px; width:4px; height:72px;
+      background:#e5e7eb; transform-origin:bottom center;
+      transform: translateX(-50%) rotate(-90deg);
+      border-radius:999px;
+      box-shadow:0 2px 12px rgba(0,0,0,.45);
+    }
+    .kpi{position:absolute; left:0; right:0; top:54px; text-align:center}
+    .score{font-size:54px; font-weight:1000; line-height:1}
+    .label{margin-top:6px; font-size:14px; color:var(--muted); font-weight:900}
+    .band{
+      position:absolute; bottom:4px; left:10px; right:10px;
+      display:flex; justify-content:space-between;
+      color:rgba(229,231,235,.55);
+      font-size:11px;
+    }
+    .subline{margin-top:6px; color:var(--muted); font-size:12px}
+    .dot{margin:0 8px; opacity:.7}
+    .pillRow{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .pill{border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(0,0,0,.10)}
+    .pillTitle{font-size:12px; color:var(--muted)}
+    .pillValue{margin-top:4px; font-size:18px; font-weight:1000}
+    .potential{border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(0,0,0,.10)}
+    .bar{height:12px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden}
+    .fill{height:100%; width:0%; background:linear-gradient(90deg, rgba(34,197,94,.9), rgba(34,197,94,.35))}
+    .sectionTitle{font-weight:1000; margin:6px 0 10px}
+    .top3{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px}
+    @media (max-width:900px){ .top3{grid-template-columns:1fr} }
+    .topcard{border:1px solid var(--line); border-radius:16px; background:rgba(0,0,0,.10); padding:12px; display:flex; gap:10px}
+    .badge{
+      width:28px; height:28px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-weight:1000; border:1px solid rgba(245,158,11,.45); background:rgba(245,158,11,.25);
+    }
+    .icon{
+      width:52px; height:52px; border-radius:14px; border:1px solid var(--line);
+      display:flex; align-items:center; justify-content:center; font-size:26px; background:rgba(255,255,255,.04);
+    }
+    .topinfo{flex:1}
+    .topname{font-weight:1000; margin-bottom:4px}
+    .topscore{color:#fca5a5; font-weight:1000}
+    .topmeta{margin-top:6px; font-size:12px; color:var(--muted)}
+    .toplift{margin-top:6px; font-size:12px; color:rgba(34,197,94,.9); font-weight:1000}
+    .summaryBottom{display:grid; grid-template-columns: .95fr 1.05fr; gap:14px; margin-top:14px}
+    @media (max-width:900px){ .summaryBottom{grid-template-columns:1fr} }
+    .execText{line-height:1.55; color:#e5e7eb; font-size:13px; white-space:pre-line}
+    .metrics{display:flex; flex-direction:column; gap:10px}
+    .metric{border:1px solid var(--line); border-radius:14px; padding:10px; background:rgba(255,255,255,.03)}
+    .metricHead{display:flex; justify-content:space-between; align-items:center}
+    .metricName{font-weight:1000}
+    .metricScore{font-weight:1000; color:rgba(34,197,94,.95)}
+    .metricDesc{margin-top:6px; font-size:12px; color:var(--muted)}
   </style>
+
+  <!-- Chart.js（若你的 radar.js 不是 Chart.js，可保留也不影響；若你用自繪 canvas，可把這行移除） -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- face-api.js（可選；若你 face_validation.js 會用到） -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 
 <body>
-<div class="wrap">
+  <header class="topbar">
+    <div class="brand">VHDS <span class="ver">V3</span></div>
 
-  <!-- ====== Header + language buttons ====== -->
-  <div class="top">
-    <div>
-      <div class="title" id="t_title">VHDS Health 自我健康管理</div>
-      <div class="sub" id="t_sub">四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）</div>
+    <div class="lang">
+      <button class="glass" data-lang="zh">中</button>
+      <button class="glass" data-lang="en">EN</button>
+      <button class="glass" data-lang="ja">日</button>
+      <button class="glass" data-lang="ko">한</button>
     </div>
+  </header>
 
-    <div class="glassBtns" aria-label="language">
-      <button type="button" class="glass" data-lang="zh">中文</button>
-      <button type="button" class="glass" data-lang="en">EN</button>
-      <button type="button" class="glass" data-lang="jp">日本語</button>
-      <button type="button" class="glass" data-lang="kr">한국어</button>
-    </div>
-  </div>
+  <main class="container">
+    <!-- Inputs -->
+    <section class="card">
+      <h2 id="t_input">輸入資料</h2>
 
-  <div class="row">
-
-    <!-- ====== Left: Upload & inputs ====== -->
-    <div class="card">
-      <div class="secTitle" id="t_uploadTitle">上傳照片與選擇分析</div>
-      <div class="hint" id="t_uploadHint">
-        建議光線充足、正面清晰。可上傳多張（臉/側面/全身），系統會以所上傳照片進行分析。
+      <div class="grid">
+        <label class="field">
+          <span id="t_age">年齡</span>
+          <input id="age" type="number" min="0" max="120" placeholder="例如 50" />
+        </label>
+        <label class="field">
+          <span id="t_height">身高 (cm)</span>
+          <input id="height" type="number" min="0" max="250" placeholder="例如 158" />
+        </label>
+        <label class="field">
+          <span id="t_weight">體重 (kg)</span>
+          <input id="weight" type="number" min="0" max="300" placeholder="例如 64" />
+        </label>
+        <label class="field">
+          <span id="t_waist">腰圍 (吋)</span>
+          <input id="waist" type="number" min="0" max="80" placeholder="例如 34" />
+        </label>
       </div>
 
-      <form id="vhdsForm" method="POST" action="/analyze" enctype="multipart/form-data">
-        <div style="margin-top:12px">
-          <label id="t_photoLabel" for="photo">上傳照片（可多張）</label>
-          <input id="photo" name="photo" type="file" accept="image/*" multiple />
-          <div class="small" id="t_photoSmall" style="margin-top:6px">手機可直接拍照或選擇相簿（可多選）</div>
-          <div class="preview" id="preview"></div>
-        </div>
-
-        <div style="margin-top:12px">
-          <label id="t_modeLabel" for="mode">選擇分析模式</label>
-          <select id="mode" name="mode">
-            <option value="health" id="t_modeHealth">1. 健康管理</option>
-            <option value="skin" id="t_modeSkin">2. 肌膚管理</option>
-            <option value="face" id="t_modeFace">3. 面相學分析</option>
-            <option value="psy" id="t_modePsy">4. 心理學分析</option>
+      <div class="row">
+        <div class="mode">
+          <label id="t_mode">分析模式</label>
+          <select id="mode">
+            <option value="health">健康</option>
+            <option value="skin">肌膚</option>
+            <option value="fortune">面相運勢</option>
+            <option value="psy">人際心理</option>
           </select>
         </div>
 
-        <div class="grid4" style="margin-top:12px">
-          <div>
-            <label id="t_age" for="age">年齡（歲）</label>
-            <input id="ageInput" name="age" type="number" inputmode="numeric" value="{{ age or '' }}" placeholder="例如 50"/>
+        <div class="uploader">
+          <label class="btn">
+            <input id="photos" type="file" accept="image/*" multiple />
+            <span id="t_upload">上傳照片（可多張）</span>
+          </label>
+          <div class="hint" id="t_hint">建議：清晰人像、光線充足、臉部占畫面適中。</div>
+        </div>
+      </div>
+
+      <div id="photoPreview" class="preview"></div>
+
+      <div class="row actions">
+        <button id="analyze" class="primary">開始分析</button>
+        <button id="reset" class="ghost">清除（不建議）</button>
+      </div>
+
+      <div id="alert" class="alert hidden"></div>
+    </section>
+
+    <!-- Summary -->
+    <section id="summary" class="card hidden">
+      <h2 id="t_summary">綜合狀態總結</h2>
+
+      <div class="summaryTop">
+        <div class="box">
+          <div class="kpiTitle" id="t_vhdsIndex">VHDS 指數</div>
+          <div class="gauge">
+            <div class="gaugeArc"></div>
+            <div class="needle" id="needle"></div>
+            <div class="kpi">
+              <div class="score" id="vhdsScore">--</div>
+              <div class="label" id="vhdsLabel">--</div>
+            </div>
+            <div class="band">
+              <span>0</span><span>39</span><span>60</span><span>75</span><span>100</span>
+            </div>
           </div>
-          <div>
-            <label id="t_height" for="height">身高（cm）</label>
-            <input id="heightInput" name="height" type="number" inputmode="numeric" value="{{ height or '' }}" placeholder="例如 170"/>
-          </div>
-          <div>
-            <label id="t_weight" for="weight">體重（kg）</label>
-            <input id="weightInput" name="weight" type="number" inputmode="numeric" value="{{ weight or '' }}" placeholder="例如 65"/>
-          </div>
-          <div>
-            <label id="t_waist" for="waist">腰圍（吋）</label>
-            <input id="waistInput" name="waist" type="number" inputmode="numeric" value="{{ waist or '' }}" placeholder="例如 34"/>
+          <div class="subline">
+            <span id="trend">—</span>
+            <span class="dot">•</span>
+            <span id="confidence">分析信心 —%</span>
           </div>
         </div>
 
-        <!-- hidden fields for ui state -->
-        <input type="hidden" id="lang" name="lang" value="zh"/>
+        <div class="rightBox" style="display:flex; flex-direction:column; gap:10px">
+          <div class="pillRow">
+            <div class="pill">
+              <div class="pillTitle" id="t_todayState">今日狀態</div>
+              <div class="pillValue" id="todayState">—</div>
+            </div>
+            <div class="pill">
+              <div class="pillTitle" id="t_bioAge">VHDS 生理年齡</div>
+              <div class="pillValue" id="bioAge">—</div>
+            </div>
+          </div>
 
-        <button class="btnPrimary" id="t_submit" type="submit" style="margin-top:14px">開始分析</button>
+          <div class="potential">
+            <div class="pillTitle" id="t_potential" style="margin-bottom:8px">改善潛力</div>
+            <div class="bar">
+              <div id="potentialFill" class="fill"></div>
+            </div>
+            <div class="subline" style="margin-top:8px">
+              <span id="potentialPct">—%</span>
+              <span class="dot">•</span>
+              <span id="window">最佳提升期剩餘 — 天</span>
+            </div>
+          </div>
 
-        {% if error %}
-          <div class="error">❌ {{ error }}</div>
-        {% endif %}
-      </form>
-
-      <div class="hint" style="margin-top:12px" id="t_note">
-        提醒：若照片不是全身照，系統仍會輸出結果；若要更完整的體態判讀，可再補全身/側面照。
-      </div>
-    </div>
-
-    <!-- ====== Right: Result ====== -->
-    <div class="card">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
-        <div>
-          <div class="secTitle" id="t_overall">總評分</div>
-          <div class="small"><span id="t_modeNow">模式：</span><span id="modeText">-</span></div>
-        </div>
-        <div class="pill">
-          <span class="small">Score</span>
-          <span class="scoreBig" id="overallScore">--</span>
-        </div>
-      </div>
-
-      <div class="twoCanv" style="margin-top:12px">
-        <div class="card" style="padding:12px">
-          <div class="secTitle" id="t_radarTitle">雷達圖</div>
-          <div class="small" id="t_radarHint">發光動畫（展示/正式皆可）</div>
-          <canvas id="radarCanvas" width="520" height="420"></canvas>
-        </div>
-        <div class="card" style="padding:12px">
-          <div class="secTitle" id="t_heatTitle">人體熱區圖</div>
-          <div class="small" id="t_heatHint">發光 + 呼吸脈動（10熱點）</div>
-          <canvas id="heatCanvas" width="520" height="420"></canvas>
+          <div class="pill">
+            <div class="pillTitle" id="t_priorityAction">今日優先行動</div>
+            <div class="pillValue" id="priorityAction" style="font-size:14px">—</div>
+            <div class="subline" id="expectedLift">預期提升：—</div>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top:12px">
-        <div class="secTitle" id="t_itemsTitle">10 指標（≤60字說明）</div>
-        <div class="items" id="items"></div>
+      <div style="margin-top:14px">
+        <div class="sectionTitle" id="t_top3">需關注部位 TOP 3</div>
+        <div id="top3" class="top3"></div>
       </div>
-    </div>
 
-  </div>
-</div>
+      <div class="summaryBottom">
+        <div class="box">
+          <div class="sectionTitle" id="t_radar">狀態輪廓（雷達圖）</div>
+          <canvas id="radar" width="420" height="420"></canvas>
+        </div>
 
-<!-- ============ Backend injected data ============ -->
-<script>
-/**
- * 後端如果有回傳：
- * result: { overall: 0-100, mode: "...", items:[{name,score,desc} x10] }
- * heat_scores: { key:value } or {points:[{name,score,x,y}]}
- * photo_preview: 可選（不建議放base64進來，會變慢）
- */
-window.__VHDS__ = {
-  result: {{ result|tojson if result else "null" }},
-  heat_scores: {{ heat_scores|tojson if heat_scores else "null" }}
-};
-</script>
+        <div class="box">
+          <div class="sectionTitle" id="t_exec">Executive Summary</div>
+          <div id="execSummary" class="execText">—</div>
 
-<!-- ============ Optimized render engines ============ -->
-<script src="/static/radar.js"></script>
-<script src="/static/heatmap.js"></script>
-
-<script>
-/* ================== I18N (UI only) ================== */
-const I18N = {
-  zh:{ title:"VHDS Health 自我健康管理",
-      sub:"四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（熱區 + 雷達）",
-      uploadTitle:"上傳照片與選擇分析",
-      uploadHint:"建議光線充足、正面清晰。可上傳多張（臉/側面/全身），系統會以所上傳照片進行分析。",
-      photoLabel:"上傳照片（可多張）",
-      photoSmall:"手機可直接拍照或選擇相簿（可多選）",
-      modeLabel:"選擇分析模式",
-      modeHealth:"1. 健康管理",
-      modeSkin:"2. 肌膚管理",
-      modeFace:"3. 面相學分析",
-      modePsy:"4. 心理學分析",
-      age:"年齡（歲）", height:"身高（cm）", weight:"體重（kg）", waist:"腰圍（吋）",
-      submit:"開始分析",
-      overall:"總評分", modeNow:"模式：",
-      radarTitle:"雷達圖", radarHint:"發光動畫（展示/正式皆可）",
-      heatTitle:"人體熱區圖", heatHint:"發光 + 呼吸脈動（10熱點）",
-      itemsTitle:"10 指標（≤60字說明）",
-      note:"提醒：若照片不是全身照，系統仍會輸出結果；若要更完整的體態判讀，可再補全身/側面照。"
-  },
-  en:{ title:"VHDS Health Self-Management",
-      sub:"4 modes · 10 metrics each · Quant scores + Visuals (Heat + Radar)",
-      uploadTitle:"Upload Photos & Select Mode",
-      uploadHint:"Good lighting. You may upload multiple shots (face/side/full). Results are based on uploaded photos.",
-      photoLabel:"Upload photos (multiple)",
-      photoSmall:"Take photos or pick from album (multiple)",
-      modeLabel:"Select Mode",
-      modeHealth:"1. Health", modeSkin:"2. Skin", modeFace:"3. Face Reading", modePsy:"4. Psychology",
-      age:"Age", height:"Height (cm)", weight:"Weight (kg)", waist:"Waist (inch)",
-      submit:"Analyze",
-      overall:"Overall", modeNow:"Mode:",
-      radarTitle:"Radar", radarHint:"Glow + breathing (optimized)",
-      heatTitle:"Heat Zones", heatHint:"Glow + breathing (10 points)",
-      itemsTitle:"10 Metrics (≤60 chars)",
-      note:"Tip: Full-body is optional. Uploading full/side photos may improve body-related estimation."
-  },
-  jp:{ title:"VHDS Health 自己健康管理",
-      sub:"4モード · 各10指標 · 定量スコア + 可視化（ヒート + レーダー）",
-      uploadTitle:"写真アップロード・モード選択",
-      uploadHint:"明るい環境。顔/側面/全身など複数枚アップ可能。アップした写真を基に分析します。",
-      photoLabel:"写真（複数可）",
-      photoSmall:"撮影またはアルバムから（複数選択）",
-      modeLabel:"モード",
-      modeHealth:"1. 健康管理", modeSkin:"2. 肌管理", modeFace:"3. 顔相", modePsy:"4. 心理",
-      age:"年齢", height:"身長(cm)", weight:"体重(kg)", waist:"ウエスト(inch)",
-      submit:"分析開始",
-      overall:"総合", modeNow:"モード：",
-      radarTitle:"レーダー", radarHint:"発光＋呼吸（最適化）",
-      heatTitle:"ヒートゾーン", heatHint:"発光＋呼吸（10点）",
-      itemsTitle:"10指標（60字以内）",
-      note:"全身写真がなくても結果は出ます。体型推定を高めるなら全身/側面写真を追加してください。"
-  },
-  kr:{ title:"VHDS Health 자기 건강관리",
-      sub:"4 모드 · 모드당 10 지표 · 점수 + 시각화(히트 + 레이더)",
-      uploadTitle:"사진 업로드 및 모드 선택",
-      uploadHint:"밝은 환경. 얼굴/측면/전신 등 여러 장 업로드 가능. 업로드 사진 기반 분석.",
-      photoLabel:"사진 업로드(여러 장)",
-      photoSmall:"촬영 또는 앨범 선택(복수)",
-      modeLabel:"모드",
-      modeHealth:"1. 건강", modeSkin:"2. 피부", modeFace:"3. 관상", modePsy:"4. 심리",
-      age:"나이", height:"키(cm)", weight:"몸무게(kg)", waist:"허리(inch)",
-      submit:"분석",
-      overall:"총점", modeNow:"모드:",
-      radarTitle:"레이더", radarHint:"발광+호흡(최적화)",
-      heatTitle:"열 구역", heatHint:"발광+호흡(10 포인트)",
-      itemsTitle:"10 지표(60자 이내)",
-      note:"전신 사진이 없어도 결과 출력. 체형 관련 정확도를 높이려면 전신/측면 사진 추가."
-  }
-};
-
-function setLang(lang){
-  const t = I18N[lang] || I18N.zh;
-  document.getElementById("lang").value = lang;
-
-  document.getElementById("t_title").textContent = t.title;
-  document.getElementById("t_sub").textContent = t.sub;
-  document.getElementById("t_uploadTitle").textContent = t.uploadTitle;
-  document.getElementById("t_uploadHint").textContent = t.uploadHint;
-  document.getElementById("t_photoLabel").textContent = t.photoLabel;
-  document.getElementById("t_photoSmall").textContent = t.photoSmall;
-  document.getElementById("t_modeLabel").textContent = t.modeLabel;
-  document.getElementById("t_modeHealth").textContent = t.modeHealth;
-  document.getElementById("t_modeSkin").textContent = t.modeSkin;
-  document.getElementById("t_modeFace").textContent = t.modeFace;
-  document.getElementById("t_modePsy").textContent = t.modePsy;
-  document.getElementById("t_age").textContent = t.age;
-  document.getElementById("t_height").textContent = t.height;
-  document.getElementById("t_weight").textContent = t.weight;
-  document.getElementById("t_waist").textContent = t.waist;
-  document.getElementById("t_submit").textContent = t.submit;
-  document.getElementById("t_overall").textContent = t.overall;
-  document.getElementById("t_modeNow").textContent = t.modeNow;
-  document.getElementById("t_radarTitle").textContent = t.radarTitle;
-  document.getElementById("t_radarHint").textContent = t.radarHint;
-  document.getElementById("t_heatTitle").textContent = t.heatTitle;
-  document.getElementById("t_heatHint").textContent = t.heatHint;
-  document.getElementById("t_itemsTitle").textContent = t.itemsTitle;
-  document.getElementById("t_note").textContent = t.note;
-
-  // button active
-  document.querySelectorAll(".glass[data-lang]").forEach(b=>{
-    b.classList.toggle("active", b.dataset.lang===lang);
-  });
-
-  // persist
-  sessionStorage.setItem("vhds_lang", lang);
-}
-
-document.querySelectorAll(".glass[data-lang]").forEach(btn=>{
-  btn.addEventListener("click", ()=> setLang(btn.dataset.lang));
-});
-
-/* ================== Form persistence (no photo) ================== */
-const form = document.getElementById("vhdsForm");
-const fields = ["mode","age","height","weight","waist"];
-
-function saveForm(){
-  const data = {};
-  fields.forEach(id=> data[id]=document.getElementById(id).value);
-  sessionStorage.setItem("vhds_form", JSON.stringify(data));
-}
-function restoreForm(){
-  const raw = sessionStorage.getItem("vhds_form");
-  if(!raw) return;
-  try{
-    const data = JSON.parse(raw);
-    fields.forEach(id=>{
-      if(data[id]!=null) document.getElementById(id).value = data[id];
-    });
-  }catch(e){}
-}
-
-fields.forEach(id=>{
-  document.getElementById(id).addEventListener("input", saveForm);
-  document.getElementById(id).addEventListener("change", saveForm);
-});
-
-/* ================== Photo preview (fast, no base64 store) ================== */
-const photoInput = document.getElementById("photo");
-const preview = document.getElementById("preview");
-photoInput.addEventListener("change", ()=>{
-  preview.innerHTML = "";
-  const files = [...photoInput.files].slice(0, 8);
-  files.forEach(f=>{
-    const img = document.createElement("img");
-    img.className = "thumb";
-    img.alt = "photo";
-    img.src = URL.createObjectURL(f);
-    preview.appendChild(img);
-  });
-});
-
-/* ================== Render result ================== */
-function ensureDemoResult(){
-  // 若後端沒有回傳 result，前端用示範值（讓你永遠不會空白）
-  if(window.__VHDS__.result) return window.__VHDS__.result;
-
-  const mode = document.getElementById("mode").value || "health";
-  const namesByMode = {
-    health:["心肺負荷","代謝風險","體脂分布","姿態穩定","疲勞訊號","睡眠恢復","壓力負荷","活動量","循環狀態","疼痛風險"],
-    skin:["保水度","油脂平衡","毛孔狀態","色素均勻","泛紅敏感","細紋趨勢","彈性緊緻","屏障健康","暗沉疲態","痘痘風險"],
-    face:["財運能量","事業運勢","人緣磁場","貴人指數","桃花魅力","抗壓韌性","決策魄力","守成能力","機會敏感度","波動風險"],
-    psy:["溝通清晰","同理強度","界線感","衝突處理","信任建立","情緒穩定","合作意願","主動性","關係修復","壓力反應"]
-  };
-  const names = namesByMode[mode] || namesByMode.health;
-  const items = names.map(n=>({
-    name:n,
-    score: Math.floor(70 + Math.random()*26),
-    desc:"示範：分數越高代表狀態越佳；可用作自我追蹤。"
-  }));
-  const overall = Math.round(items.reduce((a,b)=>a+b.score,0)/items.length);
-  return {overall, mode, items};
-}
-
-function renderAll(){
-  const r = ensureDemoResult();
-  document.getElementById("overallScore").textContent = r.overall ?? "--";
-  document.getElementById("modeText").textContent = r.mode ?? "-";
-
-  // items
-  const itemsEl = document.getElementById("items");
-  itemsEl.innerHTML = "";
-  (r.items||[]).slice(0,10).forEach(it=>{
-    const div = document.createElement("div");
-    div.className="item";
-    div.innerHTML = `
-      <div class="itemTop">
-        <div class="itemName">${escapeHtml(it.name||"")}</div>
-        <div class="itemScore">${Number(it.score ?? 0)} / 100</div>
+          <div class="sectionTitle" id="t_metrics" style="margin-top:14px">十大指標（名稱 + 分數 + 說明）</div>
+          <div id="metrics" class="metrics"></div>
+        </div>
       </div>
-      <div class="itemDesc">${escapeHtml((it.desc||"").slice(0,60))}</div>
-    `;
-    itemsEl.appendChild(div);
-  });
+    </section>
 
-// ===== VHDS V2.2 Radar + Heatmap render =====
+    <footer style="padding:10px 2px">
+      <div class="muted">VHDS V3（沿用 V2.2 Flask 專案路徑：templates/ + static/）</div>
+    </footer>
+  </main>
 
-// Radar (醫療級發光 + 名稱 + 數值)
-if(window.VHDSRadar && typeof window.VHDSRadar.start==="function"){
-    window.VHDSRadar.start("radarCanvas", r.items || []);
-}
-
-// Heatmap (人體10熱區 + 發光 + 呼吸脈動 + 名稱 + 數值)
-if(window.VHDSHeatmap && typeof window.VHDSHeatmap.start==="function"){
-
-    const heatItems = (r.items||[]).slice(0,10).map((it,i)=>({
-        name: it.name || ("指標"+(i+1)),
-        score: Number(it.score)||0
-    }));
-
-    window.VHDSHeatmap.start("heatCanvas", heatItems);
-}
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
-}
-
-/* ================== init ================== */
-restoreForm();
-setLang(sessionStorage.getItem("vhds_lang") || "zh");
-renderAll();
-
-// 保存表單（避免你按分析後又覺得被清空）
-form.addEventListener("submit", saveForm);
-</script>
-
+  <!-- ✅ V3 需要的 JS 載入順序（沿用你的 V2.2 專案路徑） -->
+  <script src="{{ url_for('static', filename='state_manager.js') }}"></script>
+  <script src="{{ url_for('static', filename='lang.js') }}"></script>
+  <script src="{{ url_for('static', filename='face_validation.js') }}"></script>
+  <script src="{{ url_for('static', filename='vhds_engine.js') }}"></script>
+  <script src="{{ url_for('static', filename='radar.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
-
-<script src="/static/heatmap.js"></script>
-
-<!-- VHDS DATA BRIDGE -->
-<script>
-window.VHDS = {
-    result: {{ result | tojson if result else 'null' }},
-    heat_scores: {{ heat_scores | tojson if heat_scores else 'null' }},
-    photo_previews: {{ photo_previews | tojson if photo_previews else '[]' }},
-    form: {
-        age: "{{ age or '' }}",
-        height: "{{ height or '' }}",
-        weight: "{{ weight or '' }}",
-        waist: "{{ waist or '' }}",
-        mode: "{{ mode or '' }}"
-    }
-};
-</script>
-
-
-<script>
-  // --- VHDS data bridge (確保一定有資料，不會 undefined) ---
-  window.__VHDS__ = window.__VHDS__ || {};
-  window.__VHDS__.result = window.__VHDS__.result ?? {{ result|tojson if result else "null" }};
-  window.__VHDS__.heat_scores = window.__VHDS__.heat_scores ?? {{ heat_scores|tojson if heat_scores else "{}" }};
-
-  // --- 強制給 canvas 尺寸（避免 width/height=0 導致空白） ---
-  function forceCanvasSize(id, w, h){
-    const c = document.getElementById(id);
-    if(!c) return;
-    if(!c.getAttribute("width")) c.setAttribute("width", w);
-    if(!c.getAttribute("height")) c.setAttribute("height", h);
-    c.style.width = w + "px";
-    c.style.height = h + "px";
-  }
-
-  // --- 啟動渲染（雷達 + 熱區）---
-  function bootVHDS(){
-    const r = window.__VHDS__.result;
-    const heat = window.__VHDS__.heat_scores;
-
-    // canvas size
-    forceCanvasSize("radarCanvas", 320, 320);
-    forceCanvasSize("heatCanvas", 320, 360);
-
-    // 雷達：用 items 當作資料來源（每個 item: {name, score, desc}）
-    if (window.VHDSRadar && typeof window.VHDSRadar.start === "function") {
-      const items = (r && r.items) ? r.items : [];
-      window.VHDSRadar.start("radarCanvas", items);
-    } else {
-      console.error("VHDSRadar not found. heatmap.js 沒載到或沒掛載 window.VHDSRadar");
-    }
-
-    // 熱區：用 heat_scores（key->分數）+ items 的 name 做 label
-    if (window.VHDSHeatmap && typeof window.VHDSHeatmap.start === "function") {
-      const items = (r && r.items) ? r.items : [];
-      // 10 熱點 label：優先用 items name，沒有就用預設
-      const labels = items.map(it => it?.name).filter(Boolean);
-      window.VHDSHeatmap.start("heatCanvas", heat, labels);
-    } else {
-      console.error("VHDSHeatmap not found. heatmap.js 沒載到或沒掛載 window.VHDSHeatmap");
-    }
-  }
-
-  // DOM ready 後再啟動（避免 canvas 還沒出現）
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootVHDS);
-  } else {
-    bootVHDS();
-  }
-</script>
-<script src="{{ url_for('static', filename='heatmap.js') }}"></script>    
-</body>
-</html>
+          
