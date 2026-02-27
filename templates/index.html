@@ -518,5 +518,57 @@ window.VHDS = {
 };
 </script>
 
+<script src="{{ url_for('static', filename='heatmap.js') }}"></script>
+<script>
+  // --- VHDS data bridge (確保一定有資料，不會 undefined) ---
+  window.__VHDS__ = window.__VHDS__ || {};
+  window.__VHDS__.result = window.__VHDS__.result ?? {{ result|tojson if result else "null" }};
+  window.__VHDS__.heat_scores = window.__VHDS__.heat_scores ?? {{ heat_scores|tojson if heat_scores else "{}" }};
+
+  // --- 強制給 canvas 尺寸（避免 width/height=0 導致空白） ---
+  function forceCanvasSize(id, w, h){
+    const c = document.getElementById(id);
+    if(!c) return;
+    if(!c.getAttribute("width")) c.setAttribute("width", w);
+    if(!c.getAttribute("height")) c.setAttribute("height", h);
+    c.style.width = w + "px";
+    c.style.height = h + "px";
+  }
+
+  // --- 啟動渲染（雷達 + 熱區）---
+  function bootVHDS(){
+    const r = window.__VHDS__.result;
+    const heat = window.__VHDS__.heat_scores;
+
+    // canvas size
+    forceCanvasSize("radarCanvas", 320, 320);
+    forceCanvasSize("heatCanvas", 320, 360);
+
+    // 雷達：用 items 當作資料來源（每個 item: {name, score, desc}）
+    if (window.VHDSRadar && typeof window.VHDSRadar.start === "function") {
+      const items = (r && r.items) ? r.items : [];
+      window.VHDSRadar.start("radarCanvas", items);
+    } else {
+      console.error("VHDSRadar not found. heatmap.js 沒載到或沒掛載 window.VHDSRadar");
+    }
+
+    // 熱區：用 heat_scores（key->分數）+ items 的 name 做 label
+    if (window.VHDSHeatmap && typeof window.VHDSHeatmap.start === "function") {
+      const items = (r && r.items) ? r.items : [];
+      // 10 熱點 label：優先用 items name，沒有就用預設
+      const labels = items.map(it => it?.name).filter(Boolean);
+      window.VHDSHeatmap.start("heatCanvas", heat, labels);
+    } else {
+      console.error("VHDSHeatmap not found. heatmap.js 沒載到或沒掛載 window.VHDSHeatmap");
+    }
+  }
+
+  // DOM ready 後再啟動（避免 canvas 還沒出現）
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootVHDS);
+  } else {
+    bootVHDS();
+  }
+</script>
 </body>
 </html>
