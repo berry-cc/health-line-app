@@ -87,9 +87,25 @@ def get_desc(score, lang):
 # 首頁
 # =========================
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html", app_name=APP_NAME)
+    form = {
+        "lang": "zh",
+        "mode": "health",
+        "user_id": "",
+        "age": "",
+        "height": "",
+        "weight": "",
+        "waist": "",
+    }
+
+    return render_template(
+        "index.html",
+        form=form,
+        result=None,
+        heat_scores=None,
+        photo_previews=None
+    )
 
 # =========================
 # 分析API
