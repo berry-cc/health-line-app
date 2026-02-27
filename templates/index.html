@@ -3,127 +3,82 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VHDS V3</title>
-
+<title>VHDS Submit Test</title>
 <style>
-body{
-background:#0b1020;
-color:white;
-font-family:sans-serif;
-padding:20px;
-}
-input,select,button{
-padding:8px;
-margin:5px;
-}
-#photoPreview img{
-width:80px;
-margin:5px;
-border-radius:8px;
-}
-button{
-background:#22c55e;
-color:white;
-border:none;
-cursor:pointer;
-}
+  body{background:#0b1020;color:#fff;font-family:sans-serif;padding:20px}
+  input,select{padding:10px;margin:6px 0;width:100%;max-width:420px}
+  #photoPreview{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  #photoPreview img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.2)}
+  .btn{display:inline-block;background:#22c55e;color:#fff;border:none;border-radius:10px;font-weight:900;cursor:pointer;padding:12px 14px}
+  .msg{margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,.2);border-radius:10px;max-width:720px;white-space:pre-wrap}
 </style>
-
 </head>
-
 <body>
 
-<h2>VHDS V3 分析</h2>
+<h2>VHDS - 表單送出測試</h2>
 
-<form method="POST" action="/analyze" enctype="multipart/form-data">
+<form id="vhdsForm" method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data">
+  <label>年齡
+    <input name="age" id="age" type="number">
+  </label>
 
-年齡:
-<input name="age" id="age"><br>
+  <label>模式
+    <select name="mode" id="mode">
+      <option value="health">健康</option>
+      <option value="skin">肌膚</option>
+      <option value="face">面相</option>
+      <option value="psy">心理</option>
+    </select>
+  </label>
 
-身高:
-<input name="height" id="height"><br>
+  <label>上傳照片
+    <input type="file" name="photo" id="photos" accept="image/*" multiple>
+  </label>
 
-體重:
-<input name="weight" id="weight"><br>
+  <div id="photoPreview"></div>
 
-腰圍:
-<input name="waist" id="waist"><br>
-
-模式:
-<select name="mode" id="mode">
-<option value="health">健康</option>
-<option value="skin">肌膚</option>
-<option value="face">面相</option>
-<option value="psy">心理</option>
-</select>
-
-<br><br>
-
-上傳照片:
-<input type="file" name="photo" id="photos" multiple>
-
-<div id="photoPreview"></div>
-
-<br>
-
-<button type="submit">開始分析</button>
-
+  <!-- ✅ 用 input submit，iOS 最穩 -->
+  <input id="submitBtn" class="btn" type="submit" value="開始分析（送出 /analyze）">
 </form>
+
+<div id="debug" class="msg">狀態：頁面載入完成</div>
 
 <hr>
 
 {% if result %}
-
-<h3>總分: {{result.overall}}</h3>
-
-<canvas id="radarCanvas" width="400" height="400"></canvas>
-
-{% for item in result.items %}
-
-<div>
-{{item.name}} : {{item.score}}
-</div>
-
-{% endfor %}
-
+  <h3>✅ 後端已回傳 result</h3>
+  <div class="msg">{{ result | tojson }}</div>
 {% endif %}
 
 <script>
+  // 1) 縮圖預覽（你已經成功）
+  document.getElementById("photos").addEventListener("change", function(e){
+    const preview = document.getElementById("photoPreview");
+    preview.innerHTML = "";
+    for (const file of e.target.files) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+      preview.appendChild(img);
+    }
+  });
 
-document.getElementById("photos").addEventListener("change",function(e){
+  // 2) 送出提示：按下送出一定會看到這句（若看不到=根本沒 submit）
+  const form = document.getElementById("vhdsForm");
+  const debug = document.getElementById("debug");
+  form.addEventListener("submit", function(){
+    debug.textContent = "狀態：已觸發 submit（代表按鈕有反應），正在送出到 /analyze ...";
+  });
 
-const preview=document.getElementById("photoPreview");
-
-preview.innerHTML="";
-
-for(const file of e.target.files){
-
-const img=document.createElement("img");
-
-img.src=URL.createObjectURL(file);
-
-preview.appendChild(img);
-
-}
-
-});
-
-</script>
-
-<script src="{{ url_for('static', filename='radar.js') }}"></script>
-
-<script>
-
-{% if result %}
-
-const items = {{result.items | tojson}};
-
-if(window.VHDSRadar){
-VHDSRadar.start("radarCanvas", items);
-}
-
-{% endif %}
-
+  // 3) 路由存在性檢查：/analyze 用 GET 測試會得到 405（正常）
+  (async function(){
+    try{
+      const url = form.getAttribute("action");
+      const res = await fetch(url, { method: "GET" });
+      debug.textContent += "\n偵測：/analyze GET 狀態碼 = " + res.status + "（405=正常，代表路由存在）";
+    }catch(e){
+      debug.textContent += "\n偵測：fetch 失敗 = " + String(e);
+    }
+  })();
 </script>
 
 </body>
