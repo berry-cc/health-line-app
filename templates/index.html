@@ -1,88 +1,135 @@
-from flask import Flask, render_template, request
-import random
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VHDS V3 Debug</title>
 
-app = Flask(__name__)
+<style>
+  body{
+    background:#0b1020;
+    color:#fff;
+    font-family:sans-serif;
+    padding:20px;
+  }
+  input,select{
+    padding:10px;
+    margin:6px 0;
+    width:100%;
+    max-width:420px;
+  }
+  button{
+    background:#22c55e;
+    color:#fff;
+    border:none;
+    padding:12px;
+    border-radius:10px;
+    font-weight:900;
+    cursor:pointer;
+    width:200px;
+  }
+  #photoPreview{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:10px 0;
+  }
+  #photoPreview img{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .box{
+    margin-top:12px;
+    padding:10px;
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:10px;
+    max-width:720px;
+    white-space:pre-wrap;
+  }
+</style>
+</head>
 
-APP_NAME = "VHDS Health自我健康管理"
+<body>
 
-INDICATOR_NAMES = {
-    "health":[
-        "心肺負荷","代謝風險","體脂分布","姿態穩定","疲勞訊號",
-        "睡眠恢復","壓力負荷","活動量","循環狀態","疼痛風險"
-    ],
-    "skin":[
-        "保水度","油脂平衡","毛孔狀態","色素均勻","泛紅敏感",
-        "細紋趨勢","彈性緊緻","屏障健康","暗沉疲態","痘痘風險"
-    ],
-    "face":[
-        "財運能量","事業運勢","人緣磁場","貴人指數","桃花魅力",
-        "抗壓韌性","決策魄力","守成能力","機會敏感度","波動風險"
-    ],
-    "psy":[
-        "溝通清晰","同理強度","界線感","衝突處理","信任建立",
-        "情緒穩定","合作意願","主動性","關係修復","壓力反應"
-    ],
-}
+<h2>VHDS V3 分析（Debug 版本）</h2>
 
-@app.route("/")
-def index():
-    # 首頁一律回空白（正常）
-    return render_template(
-        "index.html",
-        result=None,
-        heat_scores=None,
-        age="", height="", weight="", waist="",
-        mode_selected="health",
-        server_msg="HOME OK"
-    )
+<!-- ✅ 這行可以看到後端到底回什麼 -->
+<div class="box">
+Server 回傳訊息：
+{{ server_msg or "（尚未分析）" }}
+</div>
 
-# ✅ 除錯用：GET /analyze 直接回字串，讓你用手機驗證路由有沒有存在
-@app.route("/analyze", methods=["GET", "POST"])
-def analyze():
-    if request.method == "GET":
-        return "ANALYZE ROUTE OK"
+<form method="POST"
+      action="{{ url_for('analyze') }}"
+      enctype="multipart/form-data">
 
-    # ===== 接收表單 =====
-    age = request.form.get("age","")
-    height = request.form.get("height","")
-    weight = request.form.get("weight","")
-    waist = request.form.get("waist","")
-    mode = (request.form.get("mode","health") or "health").strip()
+  <label>年齡
+    <input name="age" type="number" value="{{ age or '' }}">
+  </label>
 
-    # ===== 接收照片（可以先不強制，用於排除問題）=====
-    photos = request.files.getlist("photo")
+  <label>身高
+    <input name="height" type="number" value="{{ height or '' }}">
+  </label>
 
-    try:
-        names = INDICATOR_NAMES.get(mode, INDICATOR_NAMES["health"])
-        items = []
-        for name in names:
-            score = random.randint(70,95)
-            items.append({"name":name, "score":score, "desc":"分數越高代表狀態越佳；可持續追蹤變化"})
+  <label>體重
+    <input name="weight" type="number" value="{{ weight or '' }}">
+  </label>
 
-        overall = sum(i["score"] for i in items)//len(items)
+  <label>腰圍
+    <input name="waist" type="number" value="{{ waist or '' }}">
+  </label>
 
-        result = {"overall":overall, "mode":mode, "items":items}
-        heat_scores = items
+  <label>模式
+    {% set ms = mode_selected or 'health' %}
+    <select name="mode">
+      <option value="health" {% if ms=='health' %}selected{% endif %}>健康</option>
+      <option value="skin" {% if ms=='skin' %}selected{% endif %}>肌膚</option>
+      <option value="face" {% if ms=='face' %}selected{% endif %}>面相</option>
+      <option value="psy" {% if ms=='psy' %}selected{% endif %}>心理</option>
+    </select>
+  </label>
 
-        return render_template(
-            "index.html",
-            result=result,
-            heat_scores=heat_scores,
-            age=age, height=height, weight=weight, waist=waist,
-            mode_selected=mode,
-            server_msg=f"ANALYZE OK | photos={len(photos)}"
-        )
+  <label>上傳照片
+    <input type="file" name="photo" id="photos" accept="image/*" multiple>
+  </label>
 
-    except Exception as e:
-        # ✅ 把錯誤直接顯示到頁面上（你不用看 Render logs 也能知道哪裡爆）
-        return render_template(
-            "index.html",
-            result=None,
-            heat_scores=None,
-            age=age, height=height, weight=weight, waist=waist,
-            mode_selected=mode,
-            server_msg=f"ANALYZE ERROR: {repr(e)}"
-        )
+  <div id="photoPreview"></div>
 
-if __name__ == "__main__":
-    app.run(debug=True)
+  <br>
+  <button type="submit">開始分析</button>
+
+</form>
+
+<hr>
+
+{% if result %}
+
+<h3>✅ 總分: {{ result.overall }}</h3>
+
+{% for item in result.items %}
+  <div>
+    {{ item.name }} ： {{ item.score }}
+  </div>
+{% endfor %}
+
+{% endif %}
+
+<script>
+  // 縮圖預覽
+  document.getElementById("photos").addEventListener("change", function(e){
+    const preview = document.getElementById("photoPreview");
+    preview.innerHTML = "";
+    for (const file of e.target.files) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+      preview.appendChild(img);
+    }
+  });
+</script>
+
+</body>
+</html>
+
