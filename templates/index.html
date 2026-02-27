@@ -1,142 +1,88 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VHDS V3</title>
-<style>
-  body{background:#0b1020;color:#fff;font-family:sans-serif;padding:20px}
-  input,select{padding:10px;margin:6px 0;width:100%;max-width:420px}
-  #photoPreview{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  #photoPreview img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.2)}
-  .btn{display:inline-block;background:#22c55e;color:#fff;border:none;border-radius:10px;font-weight:900;cursor:pointer;padding:12px 14px}
-  .msg{margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,.2);border-radius:10px;max-width:720px;white-space:pre-wrap}
-</style>
-</head>
-<body>
+from flask import Flask, render_template, request
+import random
 
-<h2>VHDS V3 分析</h2>
+app = Flask(__name__)
 
-<form id="vhdsForm" method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data">
+APP_NAME = "VHDS Health自我健康管理"
 
-  <label>年齡
-    <input name="age" id="age" type="number" value="{{ age or '' }}">
-  </label>
+INDICATOR_NAMES = {
+    "health":[
+        "心肺負荷","代謝風險","體脂分布","姿態穩定","疲勞訊號",
+        "睡眠恢復","壓力負荷","活動量","循環狀態","疼痛風險"
+    ],
+    "skin":[
+        "保水度","油脂平衡","毛孔狀態","色素均勻","泛紅敏感",
+        "細紋趨勢","彈性緊緻","屏障健康","暗沉疲態","痘痘風險"
+    ],
+    "face":[
+        "財運能量","事業運勢","人緣磁場","貴人指數","桃花魅力",
+        "抗壓韌性","決策魄力","守成能力","機會敏感度","波動風險"
+    ],
+    "psy":[
+        "溝通清晰","同理強度","界線感","衝突處理","信任建立",
+        "情緒穩定","合作意願","主動性","關係修復","壓力反應"
+    ],
+}
 
-  <label>身高
-    <input name="height" id="height" type="number" value="{{ height or '' }}">
-  </label>
+@app.route("/")
+def index():
+    # 首頁一律回空白（正常）
+    return render_template(
+        "index.html",
+        result=None,
+        heat_scores=None,
+        age="", height="", weight="", waist="",
+        mode_selected="health",
+        server_msg="HOME OK"
+    )
 
-  <label>體重
-    <input name="weight" id="weight" type="number" value="{{ weight or '' }}">
-  </label>
+# ✅ 除錯用：GET /analyze 直接回字串，讓你用手機驗證路由有沒有存在
+@app.route("/analyze", methods=["GET", "POST"])
+def analyze():
+    if request.method == "GET":
+        return "ANALYZE ROUTE OK"
 
-  <label>腰圍
-    <input name="waist" id="waist" type="number" value="{{ waist or '' }}">
-  </label>
+    # ===== 接收表單 =====
+    age = request.form.get("age","")
+    height = request.form.get("height","")
+    weight = request.form.get("weight","")
+    waist = request.form.get("waist","")
+    mode = (request.form.get("mode","health") or "health").strip()
 
-  <label>模式
-    {% set ms = mode_selected or (result.mode if result) or 'health' %}
-    <select name="mode" id="mode">
-      <option value="health" {% if ms=='health' %}selected{% endif %}>健康</option>
-      <option value="skin"   {% if ms=='skin' %}selected{% endif %}>肌膚</option>
-      <option value="face"   {% if ms=='face' %}selected{% endif %}>面相</option>
-      <option value="psy"    {% if ms=='psy' %}selected{% endif %}>心理</option>
-    </select>
-  </label>
+    # ===== 接收照片（可以先不強制，用於排除問題）=====
+    photos = request.files.getlist("photo")
 
-  <label>上傳照片
-    <input type="file" name="photo" id="photos" accept="image/*" multiple>
-  </label>
+    try:
+        names = INDICATOR_NAMES.get(mode, INDICATOR_NAMES["health"])
+        items = []
+        for name in names:
+            score = random.randint(70,95)
+            items.append({"name":name, "score":score, "desc":"分數越高代表狀態越佳；可持續追蹤變化"})
 
-  <div id="photoPreview"></div>
+        overall = sum(i["score"] for i in items)//len(items)
 
-  <!-- iOS 最穩：用 input submit -->
-  <input id="submitBtn" class="btn" type="submit" value="開始分析">
+        result = {"overall":overall, "mode":mode, "items":items}
+        heat_scores = items
 
-</form>
+        return render_template(
+            "index.html",
+            result=result,
+            heat_scores=heat_scores,
+            age=age, height=height, weight=weight, waist=waist,
+            mode_selected=mode,
+            server_msg=f"ANALYZE OK | photos={len(photos)}"
+        )
 
-<div id="debug" class="msg">狀態：頁面載入完成（若你按分析後這行會更新）</div>
+    except Exception as e:
+        # ✅ 把錯誤直接顯示到頁面上（你不用看 Render logs 也能知道哪裡爆）
+        return render_template(
+            "index.html",
+            result=None,
+            heat_scores=None,
+            age=age, height=height, weight=weight, waist=waist,
+            mode_selected=mode,
+            server_msg=f"ANALYZE ERROR: {repr(e)}"
+        )
 
-<hr>
-
-{% if result %}
-  <h3>總分: {{result.overall}}</h3>
-  <canvas id="radarCanvas" width="400" height="400"></canvas>
-
-  {% for item in result.items %}
-    <div>{{item.name}} : {{item.score}}</div>
-  {% endfor %}
-{% endif %}
-
-<script>
-  const form = document.getElementById("vhdsForm");
-  const debug = document.getElementById("debug");
-  const photosInput = document.getElementById("photos");
-  const preview = document.getElementById("photoPreview");
-
-  // =========================
-  // (1) 縮圖：選檔即顯示 + 存到 sessionStorage（為了重新載入後還能顯示）
-  // =========================
-  async function filesToThumbDataURLs(files){
-    const arr = [];
-    for (const f of files) {
-      const dataUrl = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.onerror = reject;
-        r.readAsDataURL(f);
-      });
-      arr.push(dataUrl);
-    }
-    return arr;
-  }
-
-  function renderThumbs(dataUrls){
-    preview.innerHTML = "";
-    for (const src of dataUrls) {
-      const img = document.createElement("img");
-      img.src = src;
-      preview.appendChild(img);
-    }
-  }
-
-  photosInput.addEventListener("change", async (e) => {
-    const files = [...e.target.files].slice(0, 10);
-    const thumbs = await filesToThumbDataURLs(files);
-    sessionStorage.setItem("vhds_thumbs", JSON.stringify(thumbs));
-    renderThumbs(thumbs);
-  });
-
-  // =========================
-  // (2) 頁面載入時：把上次的縮圖畫回來
-  // =========================
-  (function restoreThumbs(){
-    const raw = sessionStorage.getItem("vhds_thumbs");
-    if(!raw) return;
-    try{
-      const thumbs = JSON.parse(raw);
-      if(Array.isArray(thumbs) && thumbs.length) renderThumbs(thumbs);
-    }catch(_){}
-  })();
-
-  // =========================
-  // (3) 送出提示：讓你看得出「有送出」
-  // =========================
-  form.addEventListener("submit", function(){
-    debug.textContent = "狀態：已送出 /analyze，等待後端回傳結果...（頁面會重新載入）";
-  });
-</script>
-
-<script src="{{ url_for('static', filename='radar.js') }}"></script>
-<script>
-{% if result %}
-  const items = {{ result.items | tojson }};
-  if (window.VHDSRadar && typeof VHDSRadar.start === "function") {
-    VHDSRadar.start("radarCanvas", items);
-  }
-{% endif %}
-</script>
-
-</body>
-</html>
+if __name__ == "__main__":
+    app.run(debug=True)
