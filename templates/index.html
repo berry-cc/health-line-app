@@ -1,869 +1,213 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VHDS Health 自我健康管理（測試版 V1）</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VHDS Health V2</title>
 
-  <style>
-    :root{
-      --bg:#0b1220;
-      --card:#111827;
-      --panel:#0f172a;
-      --line:rgba(255,255,255,.08);
-      --text:#e5e7eb;
-      --muted:rgba(229,231,235,.72);
-      --accent1:#00ffc8;
-      --accent2:#00b4ff;
-      --danger:#ff5b6e;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans";
-      background:var(--bg);
-      color:var(--text);
-    }
-    .wrap{
-      max-width:860px;
-      margin:0 auto;
-      padding:18px 16px 28px;
-    }
-    .top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .title{
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:.2px;
-      margin:0;
-    }
-    .subtitle{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-    .langbar{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .langbtn{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      padding:8px 10px;
-      border-radius:999px;
-      font-weight:700;
-      font-size:13px;
-      cursor:pointer;
-      user-select:none;
-    }
-    .langbtn.active{
-      border-color:rgba(0,255,200,.55);
-      box-shadow:0 0 0 2px rgba(0,255,200,.12);
-      background:linear-gradient(135deg, rgba(0,255,200,.16), rgba(0,180,255,.10));
-    }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      margin-bottom:14px;
-    }
-    .grid2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width:760px){
-      .grid2{ grid-template-columns:1fr; }
-      .langbar{ justify-content:flex-start; }
-      .top{ flex-direction:column; align-items:stretch; }
-    }
-
-    label{
-      display:block;
-      font-size:13px;
-      color:var(--muted);
-      margin:10px 0 6px;
-      font-weight:700;
-    }
-    input, select{
-      width:100%;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      outline:none;
-    }
-    input::placeholder{ color:rgba(229,231,235,.35) }
-    .row{
-      display:flex;
-      gap:10px;
-    }
-    .row > div{ flex:1; }
-
-    .btn{
-      width:100%;
-      margin-top:12px;
-      padding:12px 14px;
-      border:none;
-      border-radius:14px;
-      cursor:pointer;
-      font-weight:900;
-      color:#001013;
-      background:linear-gradient(90deg, var(--accent1), var(--accent2));
-    }
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-    }
-
-    .note{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.45;
-    }
-
-    .resultHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .overall{
-      display:flex;
-      align-items:baseline;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      background:rgba(0,255,200,.08);
-      border:1px solid rgba(0,255,200,.18);
-    }
-    .overall .n{
-      font-size:26px;
-      font-weight:900;
-      letter-spacing:.2px;
-    }
-    .overall .t{
-      font-size:13px;
-      color:rgba(229,231,235,.85);
-      font-weight:800;
-    }
-    .warn{
-      color:rgba(255,255,255,.78);
-      font-size:12px;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-    }
-
-    .panelTitle{
-      font-size:14px;
-      font-weight:900;
-      margin:0 0 8px;
-    }
-    .panelSub{
-      margin:0 0 8px;
-      color:var(--muted);
-      font-size:12px;
-    }
-    canvas{
-      width:100%;
-      height:auto;
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:14px;
-      display:block;
-    }
-    .items{
-      display:grid;
-      gap:10px;
-      margin-top:10px;
-    }
-    .item{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:10px 12px;
-    }
-    .itemTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-start;
-    }
-    .itemName{
-      font-weight:900;
-      font-size:13px;
-    }
-    .itemScore{
-      font-weight:900;
-      font-size:14px;
-      color:#c7fff3;
-    }
-    .itemDesc{
-      margin-top:6px;
-      font-size:12px;
-      color:rgba(229,231,235,.78);
-      line-height:1.35;
-    }
-    .error{
-      color:#ffd7dd;
-      border:1px solid rgba(255,91,110,.35);
-      background:rgba(255,91,110,.10);
-      padding:10px 12px;
-      border-radius:14px;
-      margin-top:10px;
-      font-size:13px;
-      display:none;
-    }
-    .okline{
-      margin-top:10px;
-      color:rgba(229,231,235,.75);
-      font-size:12px;
-      display:none;
-    }
-  </style>
+<style>
+body{
+  margin:0;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  background:#07111f;
+  color:#e8f1ff;
+}
+.wrap{max-width:720px;margin:auto;padding:20px;}
+.card{
+  background:linear-gradient(180deg,#0d1c33,#0a1527);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 10px 40px rgba(0,0,0,.4);
+}
+button{
+  background:linear-gradient(90deg,#12e0b2,#00a8ff);
+  border:none;
+  padding:12px 18px;
+  border-radius:10px;
+  color:#000;
+  font-weight:700;
+  cursor:pointer;
+}
+input{
+  width:100%;
+  margin:6px 0 12px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.2);
+  background:#0c1a30;
+  color:#fff;
+}
+.metric{
+  padding:14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  margin:10px 0;
+}
+.metric-head{
+  display:flex;
+  justify-content:space-between;
+  font-weight:700;
+}
+.metric-desc{
+  opacity:.8;
+  font-size:14px;
+  margin-top:6px;
+}
+canvas{max-width:100%;}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h1 class="title" data-i18n="title">VHDS Health 自我健康管理（測試版 V1）</h1>
-        <p class="subtitle" data-i18n="sub">
-          四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（雷達圖 + 人體熱區圖）
-        </p>
-      </div>
+<div class="wrap">
 
-      <div class="langbar" aria-label="language">
-        <button class="langbtn active" type="button" data-lang="zh">中文</button>
-        <button class="langbtn" type="button" data-lang="en">EN</button>
-        <button class="langbtn" type="button" data-lang="jp">日本語</button>
-        <button class="langbtn" type="button" data-lang="kr">한국어</button>
-      </div>
-    </div>
+<h1>VHDS Health 自我健康管理 V2</h1>
 
-    <div class="card">
-      <form id="vhdsForm" method="POST" action="/analyze" enctype="multipart/form-data">
-        <label data-i18n="photoLabel">上傳照片</label>
-        <input id="photo" name="photos" type="file" accept="image/*" multiple />
+<div class="card">
+<form method="POST" action="/analyze" enctype="multipart/form-data">
+<input type="hidden" name="lang" value="{{ form.lang if form else 'zh' }}">
+<input type="hidden" name="mode" value="{{ form.mode if form else 'health' }}">
 
-        <label data-i18n="modeLabel">選擇分析模式</label>
-        <select id="mode" name="mode">
-          <option value="health" data-i18n="modeHealth">1. 健康管理</option>
-          <option value="skin"  data-i18n="modeSkin">2. 肌膚管理</option>
-          <option value="face"  data-i18n="modeFace">3. 面相學分析</option>
-          <option value="psy"   data-i18n="modePsy">4. 心理學分析</option>
-        </select>
+<label>年齡</label>
+<input name="age" value="{{ form.age if form else '' }}">
 
-        <div class="grid2">
-          <div>
-            <label data-i18n="age">年齡（歲）</label>
-            <input id="age" name="age" inputmode="numeric" placeholder="例如 35" />
-          </div>
-          <div>
-            <label data-i18n="height">身高（cm）</label>
-            <input id="height" name="height" inputmode="numeric" placeholder="例如 170" />
-          </div>
-        </div>
+<label>身高(cm)</label>
+<input name="height" value="{{ form.height if form else '' }}">
 
-        <div class="grid2">
-          <div>
-            <label data-i18n="weight">體重（kg）</label>
-            <input id="weight" name="weight" inputmode="numeric" placeholder="例如 65" />
-          </div>
-          <div>
-            <label data-i18n="waist">腰圍（吋）</label>
-            <input id="waist" name="waist" inputmode="numeric" placeholder="例如 32" />
-          </div>
-        </div>
+<label>體重(kg)</label>
+<input name="weight" value="{{ form.weight if form else '' }}">
 
-        <!-- lang hidden field (session) -->
-        <input id="langInput" name="lang" type="hidden" value="zh"/>
+<label>腰圍(吋)</label>
+<input name="waist" value="{{ form.waist if form else '' }}">
 
-        <button id="submitBtn" class="btn" type="submit" data-i18n="submit">開始分析</button>
+<label>照片（可上傳頭部即可）</label>
+<input type="file" name="photos" multiple accept="image/*">
 
-        <div id="errBox" class="error"></div>
-        <div id="okLine" class="okline">已送出分析請求，等待結果…</div>
+<button type="submit">開始分析</button>
+</form>
+</div>
 
-        <div class="note" data-i18n="hint">
-          若未提供全身照，系統會以目前照片可取得資訊生成報告；若要更準確，建議補上全身照。
-        </div>
-      </form>
-    </div>
+{% if result %}
 
-    <div class="card" id="resultCard" style="display:none;">
-      <div class="resultHead">
-        <div class="overall">
-          <div class="t" data-i18n="overall">總評分</div>
-          <div class="n" id="overallScore">--</div>
-        </div>
-        <div class="warn" id="fullbodyHint" data-i18n="fullbodyHint">
-          若要更準確，建議補上全身照。
-        </div>
-      </div>
+<div class="card">
+<h2>總評分 {{ result.overall }}</h2>
+<canvas id="radarChart"></canvas>
+</div>
 
-      <div class="grid2">
-        <div>
-          <div class="panelTitle" data-i18n="radarTitle">雷達圖</div>
-          <div class="panelSub" data-i18n="radarSub">發光動畫（展示）</div>
-          <canvas id="radarCanvas" width="520" height="360"></canvas>
-        </div>
-        <div>
-          <div class="panelTitle" data-i18n="heatTitle">人體熱區圖</div>
-          <div class="panelSub" data-i18n="heatSub">發光 + 呼吸脈動（展示）</div>
-          <canvas id="heatCanvas" width="520" height="360"></canvas>
-        </div>
-      </div>
+<div class="card">
+<h2>人體熱區圖（醫療級動態）</h2>
+<canvas id="heatCanvas" width="400" height="520"></canvas>
+</div>
 
-      <div style="margin-top:14px;">
-        <div class="panelTitle" data-i18n="itemsTitle">十大指標（每項 60 字內）</div>
-        <div id="itemsBox" class="items"></div>
-      </div>
-    </div>
-  </div>
+<div class="card">
+<h2>十大指標</h2>
+<div id="metricsBox"></div>
+</div>
 
-  <script>
-  // =========================
-  // I18N (UI only)
-  // =========================
-  const I18N = {
-    zh:{
-      title:"VHDS Health 自我健康管理（測試版 V1）",
-      sub:"四模式 · 每模式 10 指標 · 量化分數 + 視覺化呈現（雷達圖 + 人體熱區圖）",
-      photoLabel:"上傳照片",
-      modeLabel:"選擇分析模式",
-      modeHealth:"1. 健康管理",
-      modeSkin:"2. 肌膚管理",
-      modeFace:"3. 面相學分析",
-      modePsy:"4. 心理學分析",
-      age:"年齡（歲）",
-      height:"身高（cm）",
-      weight:"體重（kg）",
-      waist:"腰圍（吋）",
-      submit:"開始分析",
-      hint:"若未提供全身照，系統會以目前照片可取得資訊生成報告；若要更準確，建議補上全身照。",
-      overall:"總評分",
-      fullbodyHint:"若要更準確，建議補上全身照。",
-      radarTitle:"雷達圖",
-      radarSub:"發光動畫（展示）",
-      heatTitle:"人體熱區圖",
-      heatSub:"發光 + 呼吸脈動（展示）",
-      itemsTitle:"十大指標（每項 60 字內）",
-      wait:"已送出分析請求，等待結果…"
-    },
-    en:{
-      title:"VHDS Health Self-Management (Test V1)",
-      sub:"4 modes · 10 metrics each · Scores + Visuals (Radar + Heatmap)",
-      photoLabel:"Upload Photo",
-      modeLabel:"Select Mode",
-      modeHealth:"1. Health",
-      modeSkin:"2. Skin",
-      modeFace:"3. Face Reading",
-      modePsy:"4. Psychology",
-      age:"Age",
-      height:"Height (cm)",
-      weight:"Weight (kg)",
-      waist:"Waist (inch)",
-      submit:"Analyze",
-      hint:"If not full-body, we still generate results from available info. For better accuracy, upload full-body photo.",
-      overall:"Overall",
-      fullbodyHint:"For better accuracy, upload a full-body photo.",
-      radarTitle:"Radar",
-      radarSub:"Glow animation (demo)",
-      heatTitle:"Body Heat Zones",
-      heatSub:"Glow + breathing pulse (demo)",
-      itemsTitle:"Top 10 Metrics (≤ 60 chars)",
-      wait:"Request sent, waiting for result…"
-    },
-    jp:{
-      title:"VHDS Health 自己健康管理（テストV1）",
-      sub:"4モード · 各10指標 · スコア + 可視化（レーダー + ヒート）",
-      photoLabel:"写真をアップロード",
-      modeLabel:"モード選択",
-      modeHealth:"1. 健康管理",
-      modeSkin:"2. 肌管理",
-      modeFace:"3. 顔相分析",
-      modePsy:"4. 心理分析",
-      age:"年齢",
-      height:"身長（cm）",
-      weight:"体重（kg）",
-      waist:"ウエスト（inch）",
-      submit:"分析開始",
-      hint:"全身写真がなくても生成可能。精度向上には全身写真を推奨。",
-      overall:"総合",
-      fullbodyHint:"精度向上には全身写真を推奨。",
-      radarTitle:"レーダー",
-      radarSub:"発光アニメ（デモ）",
-      heatTitle:"ヒートゾーン",
-      heatSub:"発光＋呼吸パルス（デモ）",
-      itemsTitle:"10指標（60字以内）",
-      wait:"送信しました。結果を待っています…"
-    },
-    kr:{
-      title:"VHDS Health 자기 건강관리(테스트 V1)",
-      sub:"4 모드 · 모드당 10 지표 · 점수 + 시각화(레이더 + 히트)",
-      photoLabel:"사진 업로드",
-      modeLabel:"모드 선택",
-      modeHealth:"1. 건강",
-      modeSkin:"2. 피부",
-      modeFace:"3. 관상",
-      modePsy:"4. 심리",
-      age:"나이",
-      height:"키(cm)",
-      weight:"몸무게(kg)",
-      waist:"허리(inch)",
-      submit:"분석 시작",
-      hint:"전신 사진이 없어도 생성 가능. 정확도 향상을 위해 전신 사진 권장.",
-      overall:"총점",
-      fullbodyHint:"정확도 향상을 위해 전신 사진을 권장합니다.",
-      radarTitle:"레이더",
-      radarSub:"발광 애니메이션(데모)",
-      heatTitle:"열 구역",
-      heatSub:"발광+호흡 펄스(데모)",
-      itemsTitle:"10 지표(60자 이내)",
-      wait:"요청 전송 완료. 결과 대기 중…"
-    }
-  };
+{% endif %}
 
-  // =========================
-  // Session persistence (close tab => cleared)
-  // =========================
-  const SKEY = "vhds_v1_";
-  const persistIds = ["mode","age","height","weight","waist","langInput"];
-  function saveSession(){
-    persistIds.forEach(id=>{
-      const el = document.getElementById(id);
-      if(!el) return;
-      sessionStorage.setItem(SKEY+id, el.value ?? "");
-    });
-  }
-  function restoreSession(){
-    persistIds.forEach(id=>{
-      const el = document.getElementById(id);
-      if(!el) return;
-      const v = sessionStorage.getItem(SKEY+id);
-      if(v !== null && v !== undefined && v !== "") el.value = v;
-    });
-  }
+</div>
 
-  // =========================
-  // Demo fallback data (guarantee not blank)
-  // =========================
-  function demoResult(mode){
-    const zhNames = {
-      health:["代謝效率","心肺耐力","循環穩定","睡眠品質","壓力負荷","恢復能力","肌力狀態","體脂管理","活動度","整體活力"],
-      skin:["水分保留","油脂平衡","毛孔狀態","彈性緊緻","色素均勻","細紋風險","泛紅敏感","屏障穩定","暗沉指數","整體光澤"],
-      face:["財運起伏","事業運勢","貴人機率","人緣魅力","情感走勢","決策穩定","抗壓韌性","風險偏好","機會敏感","整體運勢"],
-      psy:["溝通清晰","情緒穩定","同理能力","界線感","信任建立","衝突處理","影響力","合作傾向","壓力反應","人際滿意"]
-    };
-    const names = zhNames[mode] || zhNames.health;
-    const items = names.map(n=>({
-      name:n,
-      score: 70 + Math.floor(Math.random()*26),
-      desc:"量化分數供參考；若要更準確，建議補上全身照。"
-    }));
-    return {
-      overall: 78 + Math.floor(Math.random()*18),
-      mode,
-      items
-    };
-  }
-  function demoHeat(){
-    return { head:78, chest:84, abdomen:74, armL:70, armR:72, legL:86, legR:88 };
-  }
-
-  // =========================
-  // Render: items + charts
-  // =========================
-  function renderItems(items){
-    const box = document.getElementById("itemsBox");
-    box.innerHTML = "";
-    (items||[]).slice(0,10).forEach((it, idx)=>{
-      const name = it.name ?? ("指標"+(idx+1));
-      const score = Number(it.score ?? 0);
-      const desc = String(it.desc ?? "").slice(0,60);
-      const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `
-        <div class="itemTop">
-          <div class="itemName">${idx+1}. ${escapeHtml(name)}</div>
-          <div class="itemScore">${isFinite(score)?score:"--"}</div>
-        </div>
-        <div class="itemDesc">${escapeHtml(desc || "量化分數供參考；若要更準確，建議補上全身照。")}</div>
-      `;
-      box.appendChild(div);
-    });
-  }
-
-  function drawRadar(items){
-    const c = document.getElementById("radarCanvas");
-    const ctx = c.getContext("2d");
-    const W = c.width, H = c.height;
-    ctx.clearRect(0,0,W,H);
-
-    const list = (items||[]).slice(0,6);
-    const N = Math.max(3, list.length || 6);
-
-    const cx = W*0.5, cy = H*0.55;
-    const R  = Math.min(W,H)*0.33;
-
-    // grid
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,.10)";
-    ctx.lineWidth = 1;
-    for(let k=1;k<=4;k++){
-      const r = R*(k/4);
-      ctx.beginPath();
-      for(let i=0;i<N;i++){
-        const a = (-Math.PI/2) + i*(2*Math.PI/N);
-        const x = cx + r*Math.cos(a);
-        const y = cy + r*Math.sin(a);
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    }
-    for(let i=0;i<N;i++){
-      const a = (-Math.PI/2) + i*(2*Math.PI/N);
-      ctx.beginPath();
-      ctx.moveTo(cx,cy);
-      ctx.lineTo(cx + R*Math.cos(a), cy + R*Math.sin(a));
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // values
-    const vals = [];
-    for(let i=0;i<N;i++){
-      const v = list[i] ? Number(list[i].score ?? 0) : (70 + i*3);
-      vals.push(Math.max(0, Math.min(100, isFinite(v)?v:0)));
-    }
-    const pts = vals.map((v,i)=>{
-      const a = (-Math.PI/2) + i*(2*Math.PI/N);
-      const r = R*(v/100);
-      return [cx + r*Math.cos(a), cy + r*Math.sin(a)];
-    });
-
-    // glow polygon
-    ctx.save();
-    ctx.shadowColor = "rgba(0,255,200,.55)";
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = "rgba(0,255,200,.18)";
-    ctx.strokeStyle = "rgba(0,255,200,.85)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-ctx.closePath();
-ctx.fill();
-ctx.stroke();
-
-ctx.restore();   // ✅ 必須先 restore glow 狀態
-
-// ===== 顯示文字與分數 =====
-ctx.save();
-
-ctx.fillStyle = "#ffffff";
-ctx.font = "12px Arial";
-ctx.textAlign = "center";
-
-for(let i=0;i<N;i++){
-
-    const angle = (-Math.PI/2) + i*(2*Math.PI/N);
-
-    const labelRadius = R + 32;
-
-    const lx = cx + labelRadius * Math.cos(angle);
-    const ly = cy + labelRadius * Math.sin(angle);
-
-    const name = list[i]?.name || ("指標"+(i+1));
-    const score = vals[i] ?? 0;
-
-    ctx.fillText(name + " " + score, lx, ly);
-}
-
-ctx.restore();
-  }
-
-  // heatmap with breathing pulse
-  let heatAnimHandle = null;
-  function drawHeatmap(heatScores){
-    const c = document.getElementById("heatCanvas");
-    const ctx = c.getContext("2d");
-    const W = c.width, H = c.height;
-
-    const points = [
-      ["head",   0.50, 0.20],
-      ["chest",  0.50, 0.38],
-      ["abdomen",0.50, 0.56],
-      ["armL",   0.32, 0.40],
-      ["armR",   0.68, 0.40],
-      ["legL",   0.44, 0.82],
-      ["legR",   0.56, 0.82],
-    ];
-
-    function frame(t){
-      ctx.clearRect(0,0,W,H);
-
-      // simple silhouette
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,.10)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(W*0.5, H*0.18, 24, 0, Math.PI*2); ctx.stroke();
-      roundRect(ctx, W*0.42, H*0.26, W*0.16, H*0.50, 18); ctx.stroke();
-      ctx.restore();
-
-      const pulse = 0.85 + 0.15*Math.sin(t/450);
-
-points.forEach(([key, px, py]) => {
-
-  // 1) 取分數（0~100）
-  const raw = Number(heatScores?.[key]);
-  const v = Number.isFinite(raw) ? raw : 0;
-  const score = Math.max(0, Math.min(100, v));
-
-  // 2) 位置（px/py 允許 0~1 或 0~100，兩種都支援）
-  const nx = (px > 1) ? (px / 100) : px;
-  const ny = (py > 1) ? (py / 100) : py;
-  const x = W * nx;
-  const y = H * ny;
-
-  // 3) 半徑 + 呼吸脈動
-  const r = (14 + score * 0.18) * pulse;
-
-  // ===== 發光熱點（原本效果保留）=====
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.shadowColor = "rgba(255, 80, 120, .85)";
-  ctx.shadowBlur = 22;
-
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, `rgba(255,80,120,${0.30 + score/260})`);
-  g.addColorStop(1, "rgba(255,80,120,0)");
-
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // ===== 顯示文字 + 分數（新增）=====
-  const label = (HEAT_LABELS && HEAT_LABELS[key]) ? HEAT_LABELS[key] : key;
-
-  // 文字底板（提高可讀性）
-  ctx.save();
-  ctx.font = "12px Arial";
-  ctx.textBaseline = "middle";
-  ctx.textAlign = "left";
-
-  const text = `${label} ${Math.round(score)}`;
-  const padX = 8, padY = 5;
-
-  // 文字位置：熱點右上角（避免壓在熱點上）
-  const tx = x + r + 10;
-  const ty = y - r * 0.3;
-
-  const tw = ctx.measureText(text).width;
-
-  // 半透明底板
-  ctx.fillStyle = "rgba(0,0,0,.35)";
-  ctx.beginPath();
-  ctx.roundRect(tx - padX, ty - padY, tw + padX * 2, 22, 10);
-  ctx.fill();
-
-  // 文字發光
-  ctx.shadowColor = "rgba(0,255,220,.9)";
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(text, tx, ty + 6);
-
-  ctx.restore();
-});
-
-      heatAnimHandle = requestAnimationFrame(frame);
-    }
-
-    if(heatAnimHandle) cancelAnimationFrame(heatAnimHandle);
-    heatAnimHandle = requestAnimationFrame(frame);
-  }
-
-  function showResult(result, heatScores, hasFullBody){
-    document.getElementById("resultCard").style.display = "block";
-    document.getElementById("overallScore").textContent = String(result.overall ?? "--");
-    document.getElementById("fullbodyHint").style.display = hasFullBody ? "none" : "block";
-
-    renderItems(result.items || []);
-    drawRadar(result.items || []);
-    drawHeatmap(heatScores || demoHeat());
-  }
-
-  // =========================
-  // Language switch (do NOT rerender form => no data loss)
-  // =========================
-  function setLang(lang){
-    const dict = I18N[lang] || I18N.zh;
-    document.documentElement.lang = (lang === "zh" ? "zh" : "en");
-    document.getElementById("langInput").value = lang;
-    sessionStorage.setItem(SKEY+"langInput", lang);
-
-    document.querySelectorAll("[data-i18n]").forEach(el=>{
-      const key = el.getAttribute("data-i18n");
-      if(dict[key]) el.textContent = dict[key];
-    });
-
-    // update option text (do not rebuild options)
-    const mode = document.getElementById("mode");
-    mode.querySelector('option[value="health"]').textContent = dict.modeHealth;
-    mode.querySelector('option[value="skin"]').textContent  = dict.modeSkin;
-    mode.querySelector('option[value="face"]').textContent  = dict.modeFace;
-    mode.querySelector('option[value="psy"]').textContent   = dict.modePsy;
-
-    document.getElementById("okLine").textContent = dict.wait;
-
-    document.querySelectorAll(".langbtn").forEach(b=>{
-      b.classList.toggle("active", b.dataset.lang === lang);
-    });
-  }
-
-  // =========================
-  // Submit: AJAX to /analyze (no refresh => no data loss)
-  // If backend not ready, shows demo anyway
-  // =========================
-  async function onSubmit(e){
-    e.preventDefault();
-    saveSession();
-    hideErr();
-
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
-    document.getElementById("okLine").style.display = "block";
-
-    const mode = document.getElementById("mode").value || "health";
-
-    // simple heuristic for full-body: filename contains "full" or user selects fullbody later.
-    const file = document.getElementById("photo").files?.[0];
-    const hasFullBody = !!file && /full|body|全身/i.test(file.name);
-
-    const form = document.getElementById("vhdsForm");
-    const fd = new FormData(form);
-
-
-    // IMPORTANT: use fetch JSON. If your /analyze still returns HTML,
-    // we will fallback to demo (so never blank).
-    try{
-      const r = await fetch(form.action, { method:"POST", body:fd });
-      const ct = (r.headers.get("content-type") || "").toLowerCase();
-
-      if(ct.includes("application/json")){
-        const data = await r.json();
-        // expected: { result:{overall,mode,items:[{name,score,desc}]}, heat_scores:{...} }
-        const result = (data && data.result) ? data.result : demoResult(mode);
-        const heat   = (data && data.heat_scores) ? data.heat_scores : demoHeat();
-        showResult(result, heat, hasFullBody);
-      }else{
-        // backend returns HTML (old style) => show demo so UI not blank
-        const result = demoResult(mode);
-        showResult(result, demoHeat(), hasFullBody);
-      }
-    }catch(err){
-      // network error => show demo so UI not blank
-      const result = demoResult(mode);
-      showResult(result, demoHeat(), hasFullBody);
-    }finally{
-      btn.disabled = false;
-      document.getElementById("okLine").style.display = "none";
-    }
-  }
-
-  function showErr(msg){
-    const box = document.getElementById("errBox");
-    box.textContent = msg;
-    box.style.display = "block";
-  }
-  function hideErr(){
-    const box = document.getElementById("errBox");
-    box.style.display = "none";
-    box.textContent = "";
-  }
-
-  function roundRect(ctx, x, y, w, h, r){
-    ctx.beginPath();
-    ctx.moveTo(x+r, y);
-    ctx.arcTo(x+w, y, x+w, y+h, r);
-    ctx.arcTo(x+w, y+h, x, y+h, r);
-    ctx.arcTo(x, y+h, x, y, r);
-    ctx.arcTo(x, y, x+w, y, r);
-    ctx.closePath();
-  }
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // =========================
-  // Init
-  // =========================
-  document.addEventListener("DOMContentLoaded", ()=>{
-    restoreSession();
-
-    // bind inputs to session
-    ["mode","age","height","weight","waist"].forEach(id=>{
-      const el = document.getElementById(id);
-      if(!el) return;
-      el.addEventListener("input", saveSession);
-      el.addEventListener("change", saveSession);
-    });
-
-    // language buttons
-    document.querySelectorAll(".langbtn").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        setLang(b.dataset.lang);
-        saveSession(); // language switch won't clear inputs
-      });
-    });
-
-    // set initial language
-    const langSaved = sessionStorage.getItem(SKEY+"langInput") || document.getElementById("langInput").value || "zh";
-    setLang(langSaved);
-
-    // intercept submit => no page refresh => inputs remain
-    document.getElementById("vhdsForm").addEventListener("submit", onSubmit);
-
-    // OPTIONAL: show a demo result on first load? keep OFF.
-    // showResult(demoResult(document.getElementById("mode").value), demoHeat(), false);
-  });
-  </script>
-<!-- VHDS data bridge -->
 <script>
 window.__VHDS__ = {
-    result: {{ result|tojson if result else "null" }},
-    heat_scores: {{ heat_scores|tojson if heat_scores else "null" }},
-    photo_previews: {{ photo_previews|tojson if photo_previews else "[]" }},
-    form: {{ form|tojson if form else "{}" }}
+  result: {{ result|tojson if result else "null" }},
+  heat_scores: {{ heat_scores|tojson if heat_scores else "null" }}
 };
 </script>
 
-<script src="/static/heatmap.js"></script>  
+<script>
+if(window.__VHDS__.result){
+
+const items = window.__VHDS__.result.items;
+const labels = items.map(i=> i.name + " " + i.score);
+const scores = items.map(i=> i.score);
+
+new Chart(document.getElementById("radarChart"),{
+type:"radar",
+data:{
+labels:labels,
+datasets:[{
+data:scores
+}]
+},
+options:{
+scales:{r:{min:0,max:100}},
+plugins:{legend:{display:false}}
+}
+});
+
+const box = document.getElementById("metricsBox");
+box.innerHTML = items.map((m,i)=>`
+<div class="metric">
+<div class="metric-head">
+<div>${i+1}. ${m.name}</div>
+<div>${m.score}</div>
+</div>
+<div class="metric-desc">${m.desc}</div>
+</div>
+`).join("");
+}
+</script>
+
+<script>
+if(window.__VHDS__.heat_scores){
+
+const canvas = document.getElementById("heatCanvas");
+const ctx = canvas.getContext("2d");
+const W = canvas.width;
+const H = canvas.height;
+
+function draw(){
+ctx.clearRect(0,0,W,H);
+
+ctx.strokeStyle="rgba(255,255,255,.2)";
+ctx.lineWidth=2;
+ctx.beginPath();
+ctx.roundRect(W*0.4,H*0.2,W*0.2,H*0.6,20);
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(W*0.5,H*0.13,30,0,Math.PI*2);
+ctx.stroke();
+
+const zones=[
+{key:"head",label:"頭部",x:W*0.5,y:H*0.13},
+{key:"chest",label:"胸口",x:W*0.5,y:H*0.32},
+{key:"abdomen",label:"腹部",x:W*0.5,y:H*0.5},
+{key:"legs",label:"下肢",x:W*0.5,y:H*0.72}
+];
+
+const t = Date.now()/500;
+zones.forEach(z=>{
+const score = window.__VHDS__.heat_scores[z.key] || 0;
+const pulse = 0.7 + 0.3*Math.sin(t);
+const r = 20 + (score/100)*30;
+
+ctx.save();
+ctx.globalCompositeOperation="lighter";
+const g = ctx.createRadialGradient(z.x,z.y,0,z.x,z.y,r*2);
+g.addColorStop(0,"rgba(0,255,200,.7)");
+g.addColorStop(1,"rgba(0,255,200,0)");
+ctx.fillStyle=g;
+ctx.beginPath();
+ctx.arc(z.x,z.y,r*pulse,0,Math.PI*2);
+ctx.fill();
+ctx.restore();
+
+ctx.fillStyle="#fff";
+ctx.font="14px Arial";
+ctx.textAlign="center";
+ctx.fillText(z.label+" "+score,z.x,z.y+r+20);
+});
+
+requestAnimationFrame(draw);
+}
+
+draw();
+}
+</script>
+
 </body>
 </html>
-        
