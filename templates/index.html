@@ -74,10 +74,12 @@
 <!-- ===== 顯示結果 ===== -->
 {% if result %}
 
-<h3>總分: {{result.overall}}</h3>
+<h3>總分: {{ result["overall"] }}</h3>
 
-{% for item in result.items %}
-<div>{{item.name}} : {{item.score}}</div>
+{% for item in result["items"] %}
+<div>
+  {{ item["name"] }} : {{ item["score"] }}
+</div>
 {% endfor %}
 
 {% endif %}
