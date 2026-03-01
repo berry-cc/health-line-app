@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VHDS V3</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VHDS V3</title>
 </head>
 
 <body style="background:#0b1020;color:white;font-family:sans-serif">
@@ -13,169 +13,133 @@
 <!-- ===== 表單 ===== -->
 <form method="POST" action="/analyze" enctype="multipart/form-data">
 
-年齡:
-<input name="age" value="{{age}}">
-<br><br>
+  年齡:
+  <input id="age" name="age" value="{{age}}">
+  <br><br>
 
-身高:
-<input name="height" value="{{height}}">
-<br><br>
+  身高:
+  <input id="height" name="height" value="{{height}}">
+  <br><br>
 
-體重:
-<input name="weight" value="{{weight}}">
-<br><br>
+  體重:
+  <input id="weight" name="weight" value="{{weight}}">
+  <br><br>
 
-腰圍:
-<input name="waist" value="{{waist}}">
-<br><br>
+  腰圍:
+  <input id="waist" name="waist" value="{{waist}}">
+  <br><br>
 
-模式:
-<select name="mode">
+  模式:
+  <select id="mode" name="mode">
 
-<option value="health"
-{% if mode_selected=="health" %}selected{% endif %}>
-健康
-</option>
+    <option value="health" {% if mode_selected=="health" %}selected{% endif %}>
+      健康
+    </option>
 
-<option value="skin"
-{% if mode_selected=="skin" %}selected{% endif %}>
-肌膚
-</option>
+    <option value="skin" {% if mode_selected=="skin" %}selected{% endif %}>
+      肌膚
+    </option>
 
-<option value="face"
-{% if mode_selected=="face" %}selected{% endif %}>
-面相
-</option>
+    <option value="face" {% if mode_selected=="face" %}selected{% endif %}>
+      面相
+    </option>
 
-<option value="psy"
-{% if mode_selected=="psy" %}selected{% endif %}>
-心理
-</option>
+    <option value="psy" {% if mode_selected=="psy" %}selected{% endif %}>
+      心理
+    </option>
 
-</select>
+  </select>
 
-<br><br>
+  <br><br>
 
-上傳照片:
-<input type="file" name="photo" id="photos" multiple>
+  上傳照片:
+  <input type="file" name="photo" id="photos" multiple>
 
-<div id="preview"></div>
+  <div id="preview"></div>
 
-<br>
+  <br>
 
-<button type="submit">
-開始分析
-</button>
+  <button type="submit">開始分析</button>
 
 </form>
 
 <hr>
 
 <!-- ===== 顯示結果 ===== -->
-
 {% if result %}
 
-<h3>
-總分: {{result.overall}}
-</h3>
+  <h3>總分: {{result.overall}}</h3>
 
-{% for item in result.items %}
-
-<div>
-
-{{item.name}} : {{item.score}}
-
-</div>
-
-{% endfor %}
+  {% for item in result.items %}
+    <div>{{item.name}} : {{item.score}}</div>
+  {% endfor %}
 
 {% endif %}
 
 <!-- ===== 縮圖預覽 ===== -->
 <script>
+  (function () {
+    const photos = document.getElementById("photos");
+    const preview = document.getElementById("preview");
 
-document.getElementById("photos").addEventListener("change", function(e){
-
-const preview = document.getElementById("preview");
-
-preview.innerHTML = "";
-
-for(const file of e.target.files){
-
-const img = document.createElement("img");
-
-img.src = URL.createObjectURL(file);
-
-img.style.width = "80px";
-
-img.style.margin = "5px";
-
-preview.appendChild(img);
-
-}
-
-});
-
+    if (photos) {
+      photos.addEventListener("change", function (e) {
+        preview.innerHTML = "";
+        for (const file of e.target.files) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.style.width = "80px";
+          img.style.margin = "5px";
+          preview.appendChild(img);
+        }
+      });
+    }
+  })();
 </script>
+
+<!-- ===== 保留輸入資料（localStorage）===== -->
 <script>
+  (function () {
+    function el(id) {
+      return document.getElementById(id);
+    }
 
-// =============================
-// 保存輸入資料
-// =============================
-function saveInputs() {
+    function saveInputs() {
+      const age = el("age");
+      const height = el("height");
+      const weight = el("weight");
+      const waist = el("waist");
+      const mode = el("mode");
 
-localStorage.setItem("age", document.getElementById("age").value);
-localStorage.setItem("height", document.getElementById("height").value);
-localStorage.setItem("weight", document.getElementById("weight").value);
-localStorage.setItem("waist", document.getElementById("waist").value);
-localStorage.setItem("mode", document.getElementById("mode").value);
+      if (age) localStorage.setItem("age", age.value || "");
+      if (height) localStorage.setItem("height", height.value || "");
+      if (weight) localStorage.setItem("weight", weight.value || "");
+      if (waist) localStorage.setItem("waist", waist.value || "");
+      if (mode) localStorage.setItem("mode", mode.value || "");
+    }
 
-}
+    function loadInputs() {
+      const age = el("age");
+      const height = el("height");
+      const weight = el("weight");
+      const waist = el("waist");
+      const mode = el("mode");
 
+      if (age && localStorage.getItem("age") !== null) age.value = localStorage.getItem("age");
+      if (height && localStorage.getItem("height") !== null) height.value = localStorage.getItem("height");
+      if (weight && localStorage.getItem("weight") !== null) weight.value = localStorage.getItem("weight");
+      if (waist && localStorage.getItem("waist") !== null) waist.value = localStorage.getItem("waist");
+      if (mode && localStorage.getItem("mode") !== null) mode.value = localStorage.getItem("mode");
+    }
 
-// =============================
-// 載入輸入資料
-// =============================
-function loadInputs() {
+    // 頁面載入時恢復資料
+    window.addEventListener("load", loadInputs);
 
-if(localStorage.getItem("age"))
-document.getElementById("age").value = localStorage.getItem("age");
-
-if(localStorage.getItem("height"))
-document.getElementById("height").value = localStorage.getItem("height");
-
-if(localStorage.getItem("weight"))
-document.getElementById("weight").value = localStorage.getItem("weight");
-
-if(localStorage.getItem("waist"))
-document.getElementById("waist").value = localStorage.getItem("waist");
-
-if(localStorage.getItem("mode"))
-document.getElementById("mode").value = localStorage.getItem("mode");
-
-}
-
-
-// =============================
-// 頁面載入時恢復資料
-// =============================
-// ===== 頁面載入時恢復資料（不要覆蓋其他 onload）=====
-window.addEventListener("load", loadInputs);
-
-loadInputs();
-
-}
-
-
-// =============================
-// 輸入時自動保存
-// =============================
-document.addEventListener("input", function() {
-
-saveInputs();
-
-});
-
+    // 任一輸入改變就保存
+    document.addEventListener("input", saveInputs);
+    document.addEventListener("change", saveInputs);
+  })();
 </script>
+
 </body>
 </html>
