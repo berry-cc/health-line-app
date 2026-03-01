@@ -159,7 +159,8 @@ document.getElementById("mode").value = localStorage.getItem("mode");
 // =============================
 // 頁面載入時恢復資料
 // =============================
-window.onload = function() {
+// ===== 頁面載入時恢復資料（不要覆蓋其他 onload）=====
+window.addEventListener("load", loadInputs);
 
 loadInputs();
 
