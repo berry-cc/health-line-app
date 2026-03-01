@@ -117,6 +117,64 @@ preview.appendChild(img);
 });
 
 </script>
+<script>
 
+// =============================
+// 保存輸入資料
+// =============================
+function saveInputs() {
+
+localStorage.setItem("age", document.getElementById("age").value);
+localStorage.setItem("height", document.getElementById("height").value);
+localStorage.setItem("weight", document.getElementById("weight").value);
+localStorage.setItem("waist", document.getElementById("waist").value);
+localStorage.setItem("mode", document.getElementById("mode").value);
+
+}
+
+
+// =============================
+// 載入輸入資料
+// =============================
+function loadInputs() {
+
+if(localStorage.getItem("age"))
+document.getElementById("age").value = localStorage.getItem("age");
+
+if(localStorage.getItem("height"))
+document.getElementById("height").value = localStorage.getItem("height");
+
+if(localStorage.getItem("weight"))
+document.getElementById("weight").value = localStorage.getItem("weight");
+
+if(localStorage.getItem("waist"))
+document.getElementById("waist").value = localStorage.getItem("waist");
+
+if(localStorage.getItem("mode"))
+document.getElementById("mode").value = localStorage.getItem("mode");
+
+}
+
+
+// =============================
+// 頁面載入時恢復資料
+// =============================
+window.onload = function() {
+
+loadInputs();
+
+}
+
+
+// =============================
+// 輸入時自動保存
+// =============================
+document.addEventListener("input", function() {
+
+saveInputs();
+
+});
+
+</script>
 </body>
 </html>
